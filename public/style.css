@@ -418,17 +418,20 @@ button,.btn{font-size:24px!important;min-height:52px}
 
 <style>
 /* ===== Curriculum / Assignment Professional UI ===== */
-.curriculum-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:start}
-.curriculum-table-card{min-width:0;border:1px solid #e3eaf2;border-radius:12px;background:#fff;overflow:hidden}
-.curriculum-title{font-weight:800;font-size:20px;padding:8px 10px;background:linear-gradient(135deg,#eef6ff,#f8fbff);border-bottom:1px solid #e3eaf2;color:#183b63}
+/* ปรับให้ตารางเล็กลงและคงเรียง 3 ตาราง (ม.1 · ม.2 · ม.3) แนวนอนต่อภาคเรียน
+   เพื่อประหยัดพื้นที่หน้าจอ (แก้ตามคำขอ: ย่อขนาด + ให้ยังเรียงแนวนอนได้แม้
+   จอไม่กว้างมาก โดยลด breakpoint ที่จะยุบเป็นคอลัมน์เดียวลงจาก 1100px เหลือ 700px) */
+.curriculum-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;align-items:start}
+.curriculum-table-card{min-width:0;border:1px solid #e3eaf2;border-radius:8px;background:#fff;overflow:hidden}
+.curriculum-title{font-weight:800;font-size:13px;padding:4px 6px;background:linear-gradient(135deg,#eef6ff,#f8fbff);border-bottom:1px solid #e3eaf2;color:#183b63}
 .curriculum-table{width:100%;table-layout:auto}
-.curriculum-table th,.curriculum-table td{padding:3px 5px!important;font-size:17px!important;line-height:1!important}
-.curriculum-table th:nth-child(1){width:76px}.curriculum-table th:nth-child(2){width:auto}.curriculum-table th:nth-child(3){width:72px}.curriculum-table th:nth-child(4){width:38px}.curriculum-table th:nth-child(5){width:42px}.curriculum-table th:nth-child(6){width:68px}
-.curriculum-table .btn-icon{width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important;font-size:15px!important}
+.curriculum-table th,.curriculum-table td{padding:1px 3px!important;font-size:12px!important;line-height:1.1!important}
+.curriculum-table th:nth-child(1){width:56px}.curriculum-table th:nth-child(2){width:auto}.curriculum-table th:nth-child(3){width:52px}.curriculum-table th:nth-child(4){width:26px}.curriculum-table th:nth-child(5){width:30px}.curriculum-table th:nth-child(6){width:48px}
+.curriculum-table .btn-icon{width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;font-size:11px!important}
 .quick-note{margin:5px 0 0!important}
 .period-settings-card .data-table th,.period-settings-card .data-table td{font-size:17px!important;padding:4px 6px!important}
 .btn-sm{min-height:34px!important;padding:5px 10px!important;font-size:16px!important}
-@media(max-width:1100px){.curriculum-grid{grid-template-columns:1fr;overflow-x:auto}.curriculum-table-card{width:100%}}
+@media(max-width:700px){.curriculum-grid{grid-template-columns:1fr;overflow-x:auto}.curriculum-table-card{width:100%}}
 
 /* Student roster: compact readable layout */
 .student-data-table th,.student-data-table td{padding:3px 6px!important;line-height:1!important;vertical-align:middle}
