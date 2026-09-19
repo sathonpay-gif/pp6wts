@@ -427,8 +427,11 @@ button,.btn{font-size:24px!important;min-height:52px}
 .curriculum-card.collapsed .curriculum-grid{display:none}
 .curriculum-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;align-items:start;margin-top:6px}
 .curriculum-table-card{min-width:0;display:flex;flex-direction:column}
-.curriculum-title{font-weight:800;font-size:15px;padding:10px 14px;background:#fff;border:1px solid var(--border);border-radius:12px;color:var(--school-navy);box-shadow:var(--shadow)}
+.curriculum-title{font-weight:800;font-size:13px;padding:10px 14px;background:#fff;border:1px solid var(--border);border-radius:12px;color:var(--school-navy);box-shadow:var(--shadow)}
 .curriculum-table{width:100%;table-layout:auto}
+.curriculum-table th,.curriculum-table td{font-size:11.5px!important}
+.curriculum-card .section-kicker{font-size:10px}
+.curriculum-card .section-heading h3{font-size:19px}
 .curriculum-table .btn-icon{width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;font-size:16px!important}
 .quick-note{margin:5px 0 0!important}
 .period-settings-card .data-table th,.period-settings-card .data-table td{font-size:17px!important;padding:4px 6px!important}
