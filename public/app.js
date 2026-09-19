@@ -255,7 +255,7 @@ async function renderStudents(p){
   const isAdmin=state.me.roles.includes('ADMIN');
   let cls=[];
   try{
-    cls=isAdmin?await call('getClasses',state.token):await call('getMyHomeroomClasses',state.token,state.period.year,state.period.term);
+    cls=isAdmin?await call('getClasses',state.token,state.period.year,state.period.term):await call('getMyHomeroomClasses',state.token,state.period.year,state.period.term);
   }catch(e){
     p.innerHTML=`<div class="card"><div class="alert-inline alert-danger">${escapeHtml(e.message||'ไม่มีสิทธิ์')}</div></div>`;
     return;
@@ -315,7 +315,7 @@ async function importStudentsNow(){
 /* ---------------- Subjects / Teaching assignments (admin) ---------------- */
 async function renderSubjects(p){
   if(!state.me.roles.includes('ADMIN')){p.innerHTML='<div class="card">ไม่มีสิทธิ์</div>';return;}
-  const [subs,users,classes,assigns,availability]=await Promise.all([call('getSubjects',state.token),call('getUsers',state.token),call('getClasses',state.token),call('getAllTeachingAssignments',state.token,state.period.year,state.period.term),call('getTeachingAvailability',state.token,state.period.year,state.period.term)]); window._teachingAvailability=availability||[];
+  const [subs,users,classes,assigns,availability]=await Promise.all([call('getSubjects',state.token),call('getUsers',state.token),call('getClasses',state.token,state.period.year,state.period.term),call('getAllTeachingAssignments',state.token,state.period.year,state.period.term),call('getTeachingAvailability',state.token,state.period.year,state.period.term)]); window._teachingAvailability=availability||[];
   classes.splice(0,classes.length,...orderedClasses(classes));
   window._adminData={subs,users,classes};
   const teachers=users.filter(u=>u.roles.includes('TEACHER')||u.roles.includes('ADMIN'));
@@ -414,7 +414,7 @@ function updateMyTeachingCounts(){
 function toggleMyTeachingChecks(selector,checked){document.querySelectorAll(selector).forEach(cb=>cb.checked=checked);updateMyTeachingCounts();}
 async function renderMyTeaching(p){
   if(state.me.roles.includes('ADMIN')){p.innerHTML='<div class="card"><h2>ลงทะเบียนวิชาที่สอน</h2><p class="muted">ผู้ดูแลระบบใช้เมนูตั้งค่าวิชา / ผู้สอนได้โดยตรง</p></div>';return;}
-  const [subs,classes,assigns,availability,activityAssigns]=await Promise.all([call('getSubjects',state.token),call('getClasses',state.token),call('getTeacherAssignments',state.token,state.period.year,state.period.term),call('getTeachingAvailability',state.token,state.period.year,state.period.term),call('getActivityAssignments',state.token)]); window._teachingAvailability=availability||[];
+  const [subs,classes,assigns,availability,activityAssigns]=await Promise.all([call('getSubjects',state.token),call('getClasses',state.token,state.period.year,state.period.term),call('getTeacherAssignments',state.token,state.period.year,state.period.term),call('getTeachingAvailability',state.token,state.period.year,state.period.term),call('getActivityAssignments',state.token,state.period.year,state.period.term)]); window._teachingAvailability=availability||[];
   window._myTeachingData={subs,classes,assigns};
   const myClubs=(activityAssigns||[]).filter(a=>a.crossClass);
   const level='1';
@@ -474,7 +474,7 @@ async function registerMyTeaching(){return registerMyTeachingBatch();}
 
 /* ---------------- Activities (teacher entry) ---------------- */
 async function renderActivities(p){
-  const aas=await call('getActivityAssignments',state.token);
+  const aas=await call('getActivityAssignments',state.token,state.period.year,state.period.term);
   p.innerHTML=`<h2>กิจกรรมพัฒนาผู้เรียน</h2>${periodBannerHtml()}<div class="card"><div class="toolbar"><select id="activitySelect" onchange="loadActivityGrid()"><option value="">-- เลือกกิจกรรม / ห้อง --</option>${aas.map(a=>`<option value="${a.activityAssignmentId}">${escapeHtml(a.activityName+(a.groupName?' ('+a.groupName+')':'')+(a.className?' · '+a.className:' · คละห้อง'))}</option>`).join('')}</select><button class="btn btn-secondary" onclick="openActivityPasteModal()">📋 วางผลจาก Excel</button><button class="btn btn-primary" onclick="saveActivityGrid()">บันทึก</button></div><div id="activityGrid" class="table-wrap"></div></div>`;
   window._activityAssignments=aas;
 }
@@ -524,7 +524,7 @@ async function renderAssessment(p){
   const isAdmin=state.me.roles.includes('ADMIN');
   let cls=[];
   try{
-    cls=isAdmin?await call('getClasses',state.token):await call('getMyHomeroomClasses',state.token,state.period.year,state.period.term);
+    cls=isAdmin?await call('getClasses',state.token,state.period.year,state.period.term):await call('getMyHomeroomClasses',state.token,state.period.year,state.period.term);
   }catch(e){
     p.innerHTML=`<div class="card"><div class="alert-inline alert-danger">${escapeHtml(e.message||'ไม่มีสิทธิ์')}</div></div>`;
     return;
@@ -583,7 +583,7 @@ async function renderGradeHistory(p){
   const isAdmin=state.me.roles.includes('ADMIN');
   let classes=[];
   try{
-    classes=isAdmin?await call('getClasses',state.token):await call('getMyHomeroomClasses',state.token,state.period.year,state.period.term);
+    classes=isAdmin?await call('getClasses',state.token,state.period.year,state.period.term):await call('getMyHomeroomClasses',state.token,state.period.year,state.period.term);
   }catch(e){
     p.innerHTML=`<div class="card"><div class="alert-inline alert-danger">${escapeHtml(e.message||'ไม่มีสิทธิ์')}</div></div>`;
     return;
@@ -593,10 +593,10 @@ async function renderGradeHistory(p){
     p.innerHTML=`<h2>ดูเกรดย้อนหลัง</h2><div class="card"><div class="alert-inline alert-danger"><b>ยังไม่มีห้องที่ได้รับสิทธิ์ครูประจำชั้น</b><br>ผู้ดูแลระบบสามารถเชื่อมสิทธิ์ได้ที่เมนู <b>“ตั้งค่าห้อง / ครูประจำชั้น”</b></div></div>`;
     return;
   }
-  p.innerHTML=`<h2>ดูเกรดย้อนหลัง</h2><p class="sub">เลือกห้องและนักเรียนเพื่อดูคะแนน/เกรดที่บันทึกไว้ในแต่ละภาคเรียน</p><div class="card"><div class="grid grid-2"><div class="field"><label>ชั้น / ห้อง</label><select id="histClass" onchange="loadHistoryStudents()"><option value="">-- เลือกห้อง --</option>${classes.map(c=>`<option value="${c.classId}">${escapeHtml(c.className)}</option>`).join('')}</select></div><div class="field"><label>นักเรียน</label><select id="histStudent"><option value="">-- เลือกห้องก่อน --</option></select></div></div><div class="toolbar"><button class="btn btn-primary btn-lg" onclick="loadGradeHistory()">🔎 แสดงผลการเรียน</button><button class="btn btn-secondary" onclick="go('print')">🖨 ไปหน้าพิมพ์ ปพ.6</button></div></div><div id="historyResult"></div>`;
+  p.innerHTML=`<h2>ดูเกรดย้อนหลัง</h2>${periodBannerHtml()}<p class="sub">ค้นหาโดยใช้ปีการศึกษา/ภาคเรียนที่เลือกไว้ด้านบน + ห้อง + นักเรียน — ถ้าจะดูภาคเรียน/ปีการศึกษาอื่น ให้เปลี่ยนตัวเลือกปี/ภาคเรียนที่แถบด้านบนของหน้าจอก่อน แล้วค่อยเลือกห้อง/นักเรียนใหม่อีกครั้ง</p><div class="card"><div class="grid grid-2"><div class="field"><label>ชั้น / ห้อง</label><select id="histClass" onchange="loadHistoryStudents()"><option value="">-- เลือกห้อง --</option>${classes.map(c=>`<option value="${c.classId}">${escapeHtml(c.className)}</option>`).join('')}</select></div><div class="field"><label>นักเรียน</label><select id="histStudent"><option value="">-- เลือกห้องก่อน --</option></select></div></div><div class="toolbar"><button class="btn btn-primary btn-lg" onclick="loadGradeHistory()">🔎 แสดงผลการเรียน</button><button class="btn btn-secondary" onclick="go('print')">🖨 ไปหน้าพิมพ์ ปพ.6</button></div></div><div id="historyResult"></div>`;
 }
 async function loadHistoryStudents(){const cid=$('histClass').value;if(!cid)return;$('histStudent').innerHTML='<option value="">กำลังโหลด...</option>';try{const rows=await call('getStudentsByClass',state.token,cid);$('histStudent').innerHTML='<option value="">-- เลือกนักเรียน --</option>'+rows.map(r=>`<option value="${r.studentId}">${r.classNo}. ${escapeHtml(r.prefix+r.firstName+' '+r.lastName)}</option>`).join('');}catch(e){toast(e.message);}}
-async function loadGradeHistory(){const cid=$('histClass').value,sid=$('histStudent').value;if(!cid||!sid)return toast('กรุณาเลือกห้องและนักเรียน');$('historyResult').innerHTML='';$('historyResult').appendChild(showSpinner());try{const d=await call('getGradeHistory',state.token,sid,cid);const rows=d.subjects.map(s=>`<tr><td>${escapeHtml(s.year)}</td><td>${escapeHtml(s.term)}</td><td>${escapeHtml(s.code)}</td><td class="l">${escapeHtml(s.name)}</td><td>${s.score??''}</td><td>${escapeHtml(s.status||s.grade||'')}</td><td>${s.credit??''}</td></tr>`).join('');$('historyResult').innerHTML=`<div class="card" style="margin-top:16px"><div class="history-head"><div><span class="section-kicker">GRADE HISTORY</span><h3>${escapeHtml(d.student.name)}</h3><p class="muted">${escapeHtml(d.className)} · แสดงข้อมูลทุกภาคเรียนที่มีบันทึก</p></div><span class="soft-badge">${d.subjects.length} รายการ</span></div><div class="table-wrap"><table class="data-table history-table"><thead><tr><th>ปีการศึกษา</th><th>ภาคเรียน</th><th>รหัส</th><th>รายวิชา</th><th>คะแนน</th><th>เกรด/สถานะ</th><th>นก.</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="muted center">ไม่พบผลการเรียนย้อนหลัง</td></tr>'}</tbody></table></div></div>`;}catch(e){$('historyResult').innerHTML=`<div class="alert-inline alert-danger">${escapeHtml(e.message)}</div>`;}}
+async function loadGradeHistory(){const cid=$('histClass').value,sid=$('histStudent').value;if(!cid||!sid)return toast('กรุณาเลือกห้องและนักเรียน');$('historyResult').innerHTML='';$('historyResult').appendChild(showSpinner());try{const d=await call('getGradeHistory',state.token,sid,cid);const rows=d.subjects.map(s=>`<tr><td>${escapeHtml(s.year)}</td><td>${escapeHtml(s.term)}</td><td>${escapeHtml(s.code)}</td><td class="l">${escapeHtml(s.name)}</td><td>${s.score??''}</td><td>${escapeHtml(s.status||s.grade||'')}</td><td>${s.credit??''}</td></tr>`).join('');$('historyResult').innerHTML=`<div class="card" style="margin-top:16px"><div class="history-head"><div><span class="section-kicker">GRADE HISTORY</span><h3>${escapeHtml(d.student.name)}</h3><p class="muted">${escapeHtml(d.className)} · ปีการศึกษา ${escapeHtml(state.period.year)} ภาคเรียนที่ ${escapeHtml(state.period.term)}</p></div><span class="soft-badge">${d.subjects.length} รายการ</span></div><div class="table-wrap"><table class="data-table history-table"><thead><tr><th>ปีการศึกษา</th><th>ภาคเรียน</th><th>รหัส</th><th>รายวิชา</th><th>คะแนน</th><th>เกรด/สถานะ</th><th>นก.</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="muted center">ไม่พบผลการเรียนย้อนหลัง</td></tr>'}</tbody></table></div></div>`;}catch(e){$('historyResult').innerHTML=`<div class="alert-inline alert-danger">${escapeHtml(e.message)}</div>`;}}
 
 /* ---------------- Print ---------------- */
 async function renderPrint(p){
@@ -604,7 +604,7 @@ async function renderPrint(p){
   const isAdmin=state.me.roles.includes('ADMIN');
   let cls=[];
   try{
-    cls=isAdmin?await call('getClasses',state.token):await call('getMyHomeroomClasses',state.token,state.period.year,state.period.term);
+    cls=isAdmin?await call('getClasses',state.token,state.period.year,state.period.term):await call('getMyHomeroomClasses',state.token,state.period.year,state.period.term);
   }catch(e){
     p.innerHTML=`<div class="card"><div class="alert-inline alert-danger">${escapeHtml(e.message||'ไม่มีสิทธิ์')}</div></div>`;
     return;
@@ -783,7 +783,7 @@ async function renderSummary(p){
   const isAdmin=state.me.roles.includes('ADMIN');
   let cls=[];
   try{
-    cls=isAdmin?await call('getClasses',state.token):await call('getMyHomeroomClasses',state.token,state.period.year,state.period.term);
+    cls=isAdmin?await call('getClasses',state.token,state.period.year,state.period.term):await call('getMyHomeroomClasses',state.token,state.period.year,state.period.term);
   }catch(e){
     p.innerHTML=`<div class="card"><div class="alert-inline alert-danger">${escapeHtml(e.message||'ไม่มีสิทธิ์')}</div></div>`;
     return;
@@ -806,7 +806,7 @@ async function loadSummary(){
 
 /* ---------------- Validation ---------------- */
 async function renderValidation(p){
-  const cls=await call('getClasses',state.token);
+  const cls=await call('getClasses',state.token,state.period.year,state.period.term);
   p.innerHTML=`<h2>ตรวจสอบข้อมูลก่อนพิมพ์</h2><div class="card"><div class="toolbar"><select id="valClass"><option value="">-- เลือกห้อง --</option>${cls.map(c=>`<option value="${c.classId}">${escapeHtml(c.className)}</option>`).join('')}</select><button class="btn btn-primary" onclick="runValidation()">ตรวจสอบ</button></div><div id="valOut"></div></div>`;
 }
 async function runValidation(){
@@ -817,9 +817,9 @@ async function runValidation(){
 /* ---------------- Classes (admin) ---------------- */
 async function renderClasses(p){
   if(!state.me.roles.includes('ADMIN')){p.innerHTML='<div class="card">ไม่มีสิทธิ์</div>';return;}
-  const [cls,users]=await Promise.all([call('getClasses',state.token),call('getUsers',state.token)]);
+  const [cls,users]=await Promise.all([call('getClasses',state.token,state.period.year,state.period.term),call('getUsers',state.token)]);
   const opts=users.map(u=>`<option value="${u.userId}">${escapeHtml(u.fullName)}</option>`).join('');
-  p.innerHTML=`<h2>ตั้งค่าห้อง / ครูประจำชั้น</h2><div class="card"><h3 id="classFormTitle">เพิ่มห้องเรียน</h3><input type="hidden" id="clId"><div class="grid grid-2"><div class="field"><label>ระดับชั้น</label><input id="clLevel" placeholder="ม.2"></div><div class="field"><label>ห้อง</label><input id="clRoom" placeholder="3"></div><div class="field"><label>ครูประจำชั้น 1</label><select id="clHome1"><option value="">-</option>${opts}</select></div><div class="field"><label>ครูประจำชั้น 2</label><select id="clHome2"><option value="">-</option>${opts}</select></div></div><div class="toolbar"><button class="btn btn-primary" onclick="saveClassNow()">บันทึกห้องเรียน</button><button class="btn btn-secondary" id="clCancelBtn" onclick="resetClassForm()" style="display:none">ยกเลิกแก้ไข</button><span class="spacer"></span><button class="btn btn-secondary" onclick="downloadCsv('เทมเพลต_ห้องเรียน.csv',CSV_TEMPLATES.classes)">⬇ เทมเพลต CSV</button><button class="btn btn-secondary" onclick="openCsvImportModal('ห้องเรียน','importClassesCsv',()=>renderClasses($(\`page\`)))">⬆ นำเข้า CSV</button></div></div>
+  p.innerHTML=`<h2>ตั้งค่าห้อง / ครูประจำชั้น</h2>${periodBannerHtml()}<p class="section-note">หน้านี้แสดงเฉพาะห้องเรียนของภาคเรียน/ปีการศึกษาที่เลือกไว้ด้านบนเท่านั้น — ถ้าขึ้นภาคเรียนใหม่ให้กด "＋เพิ่มห้องเรียน" สร้างห้องใหม่ (ห้องเก่ายังอยู่ครบ เพียงแต่ไม่แสดงในนี้แล้ว ไปดูได้โดยสลับปี/ภาคเรียนด้านบน)</p><div class="card"><h3 id="classFormTitle">เพิ่มห้องเรียน</h3><input type="hidden" id="clId"><div class="grid grid-2"><div class="field"><label>ระดับชั้น</label><input id="clLevel" placeholder="ม.2"></div><div class="field"><label>ห้อง</label><input id="clRoom" placeholder="3"></div><div class="field"><label>ครูประจำชั้น 1</label><select id="clHome1"><option value="">-</option>${opts}</select></div><div class="field"><label>ครูประจำชั้น 2</label><select id="clHome2"><option value="">-</option>${opts}</select></div></div><div class="toolbar"><button class="btn btn-primary" onclick="saveClassNow()">บันทึกห้องเรียน</button><button class="btn btn-secondary" id="clCancelBtn" onclick="resetClassForm()" style="display:none">ยกเลิกแก้ไข</button><span class="spacer"></span><button class="btn btn-secondary" onclick="downloadCsv('เทมเพลต_ห้องเรียน.csv',CSV_TEMPLATES.classes)">⬇ เทมเพลต CSV</button><button class="btn btn-secondary" onclick="openCsvImportModal('ห้องเรียน','importClassesCsv',()=>renderClasses($(\`page\`)))">⬆ นำเข้า CSV</button></div></div>
   <div class="card" style="margin-top:14px">${bulkBarHtml('classTable',"bulkDeleteWith('classTable','deleteClass',()=>renderClasses($('page')))")}<div class="table-wrap"><table class="data-table" id="classTable"><thead><tr><th><input type="checkbox" onchange="toggleAllBulk(this,'classTable')"></th><th>ห้อง</th><th>ครูประจำชั้น 1</th><th>ครูประจำชั้น 2</th><th></th></tr></thead><tbody>${cls.map(c=>`<tr><td><input type="checkbox" class="bulk-check" value="${c.classId}" onchange="updateBulkBar('classTable')"></td><td>${escapeHtml(c.className)}</td><td>${escapeHtml((users.find(u=>u.userId===c.homeroomUser1)||{}).fullName||'')}</td><td>${escapeHtml((users.find(u=>u.userId===c.homeroomUser2)||{}).fullName||'')}</td><td class="row-actions"><button class="btn-icon" title="แก้ไข" onclick='loadClassForEdit(${JSON.stringify(c).replace(/'/g,"&#39;")})'>✏️</button><button class="btn-icon" title="ลบ" onclick="deleteClassNow('${c.classId}')">🗑️</button></td></tr>`).join('')}</tbody></table></div></div>`;
 }
 function openStudentsForClass(classId){
@@ -846,12 +846,12 @@ async function deleteClassNow(classId){
 /* ---------------- Activities admin ---------------- */
 async function renderActivitiesAdmin(p){
   if(!state.me.roles.includes('ADMIN')){p.innerHTML='<div class="card">ไม่มีสิทธิ์</div>';return;}
-  const [acts,cls,users]=await Promise.all([call('getActivities',state.token),call('getClasses',state.token),call('getUsers',state.token)]);
-  const aas=await call('getActivityAssignments',state.token);
+  const [acts,cls,users]=await Promise.all([call('getActivities',state.token),call('getClasses',state.token,state.period.year,state.period.term),call('getUsers',state.token)]);
+  const aas=await call('getActivityAssignments',state.token,state.period.year,state.period.term);
   p.innerHTML=`<h2>ตั้งค่ากิจกรรม / ผู้รับผิดชอบ</h2>
   <div class="card"><h3 id="actTypeFormTitle">เพิ่มประเภทกิจกรรม</h3><input type="hidden" id="atId"><div class="grid grid-2"><div class="field"><label>ชื่อกิจกรรม</label><input id="atName" placeholder="เช่น ชุมนุม, แนะแนว, ลูกเสือ-เนตรนารี"></div><div class="field"><label>รหัสประเภท (ภายใน)</label><select id="atType"><option value="GUIDANCE">แนะแนว (GUIDANCE)</option><option value="SCOUT">ลูกเสือ-เนตรนารี (SCOUT)</option><option value="SERVICE">สาธารณประโยชน์ (SERVICE)</option><option value="CLUB">ชุมนุม (CLUB)</option><option value="OTHER">อื่นๆ (OTHER)</option></select></div><div class="field"><label>เวลาเรียน (ชม.)</label><input id="atHours" type="number"></div><div class="field" style="align-self:end"><label><input type="checkbox" id="atCrossClass"> คละห้อง (สมาชิกมาจากหลายห้อง เช่น ชุมนุม)</label></div></div><div class="toolbar"><button class="btn btn-primary" onclick="saveActivityType()">บันทึกกิจกรรม</button><button class="btn btn-secondary" id="atCancelBtn" onclick="resetActivityTypeForm()" style="display:none">ยกเลิกแก้ไข</button></div></div>
   <div class="card" style="margin-top:14px"><h3>ประเภทกิจกรรม</h3>${bulkBarHtml('actTypeTable',"bulkDeleteWith('actTypeTable','deleteActivity',()=>renderActivitiesAdmin($('page')))")}<div class="table-wrap"><table class="data-table" id="actTypeTable"><thead><tr><th><input type="checkbox" onchange="toggleAllBulk(this,'actTypeTable')"></th><th>ชื่อ</th><th>รหัส</th><th>ชม.</th><th>คละห้อง</th><th></th></tr></thead><tbody>${acts.map(a=>`<tr><td><input type="checkbox" class="bulk-check" value="${a.activityId}" onchange="updateBulkBar('actTypeTable')"></td><td>${escapeHtml(a.name)}</td><td>${escapeHtml(a.type)}</td><td>${a.hours??''}</td><td>${a.crossClass?'✅':''}</td><td class="row-actions"><button class="btn-icon" title="แก้ไข" onclick='loadActivityTypeForEdit(${JSON.stringify(a).replace(/'/g,"&#39;")})'>✏️</button><button class="btn-icon" title="ลบ" onclick="deleteActivityTypeNow('${a.activityId}')">🗑️</button></td></tr>`).join('')}</tbody></table></div></div>
-  <div class="card" style="margin-top:14px"><h3>มอบหมายผู้รับผิดชอบ</h3><div class="grid grid-2"><div class="field"><label>กิจกรรม</label><select id="aaAct" onchange="toggleAaClassField()">${acts.map(a=>`<option value="${a.activityId}" data-cross="${a.crossClass?1:0}">${escapeHtml(a.name)}</option>`).join('')}</select></div><div class="field" id="aaClassWrap"><label>ห้อง</label><select id="aaClass"><option value="">- คละห้อง (ไม่ระบุห้อง) -</option>${cls.map(c=>`<option value="${c.classId}">${escapeHtml(c.className)}</option>`).join('')}</select></div><div class="field"><label>กลุ่ม/ชื่อชุมนุม</label><input id="aaGroup" placeholder="เช่น ชุมนุมคอมพิวเตอร์"></div><div class="field"><label>ครูผู้รับผิดชอบ</label><select id="aaTeacher">${users.filter(u=>u.roles.includes('TEACHER')||u.roles.includes('ADMIN')).map(u=>`<option value="${u.userId}">${escapeHtml(u.fullName)}</option>`).join('')}</select></div></div><div class="toolbar"><button class="btn btn-primary" onclick="saveAA()">บันทึกการมอบหมายกิจกรรม</button><span class="spacer"></span><button class="btn btn-secondary" onclick="downloadCsv('เทมเพลต_มอบหมายกิจกรรม.csv',CSV_TEMPLATES.activityAssignments)">⬇ เทมเพลต CSV</button><button class="btn btn-secondary" onclick="openCsvImportModal('มอบหมายกิจกรรม','importActivityAssignmentsCsv',()=>renderActivitiesAdmin($(\`page\`)))">⬆ นำเข้า CSV</button></div>
+  <div class="card" style="margin-top:14px"><h3>มอบหมายผู้รับผิดชอบ</h3>${periodBannerHtml()}<p class="section-note">รายการมอบหมายด้านล่างเป็นของภาคเรียน/ปีการศึกษาที่เลือกไว้ด้านบนเท่านั้น (ประเภทกิจกรรมด้านบนใช้ร่วมกันได้ทุกภาคเรียน)</p><div class="grid grid-2"><div class="field"><label>กิจกรรม</label><select id="aaAct" onchange="toggleAaClassField()">${acts.map(a=>`<option value="${a.activityId}" data-cross="${a.crossClass?1:0}">${escapeHtml(a.name)}</option>`).join('')}</select></div><div class="field" id="aaClassWrap"><label>ห้อง</label><select id="aaClass"><option value="">- คละห้อง (ไม่ระบุห้อง) -</option>${cls.map(c=>`<option value="${c.classId}">${escapeHtml(c.className)}</option>`).join('')}</select></div><div class="field"><label>กลุ่ม/ชื่อชุมนุม</label><input id="aaGroup" placeholder="เช่น ชุมนุมคอมพิวเตอร์"></div><div class="field"><label>ครูผู้รับผิดชอบ</label><select id="aaTeacher">${users.filter(u=>u.roles.includes('TEACHER')||u.roles.includes('ADMIN')).map(u=>`<option value="${u.userId}">${escapeHtml(u.fullName)}</option>`).join('')}</select></div></div><div class="toolbar"><button class="btn btn-primary" onclick="saveAA()">บันทึกการมอบหมายกิจกรรม</button><span class="spacer"></span><button class="btn btn-secondary" onclick="downloadCsv('เทมเพลต_มอบหมายกิจกรรม.csv',CSV_TEMPLATES.activityAssignments)">⬇ เทมเพลต CSV</button><button class="btn btn-secondary" onclick="openCsvImportModal('มอบหมายกิจกรรม','importActivityAssignmentsCsv',()=>renderActivitiesAdmin($(\`page\`)))">⬆ นำเข้า CSV</button></div>
     ${bulkBarHtml('aaTable',"bulkDeleteWith('aaTable','deleteActivityAssignment',()=>renderActivitiesAdmin($('page')))")}
     <div class="table-wrap" style="margin-top:10px"><table class="data-table" id="aaTable"><thead><tr><th><input type="checkbox" onchange="toggleAllBulk(this,'aaTable')"></th><th>กิจกรรม</th><th>กลุ่ม</th><th>ห้อง</th><th>ครูผู้รับผิดชอบ</th><th></th></tr></thead><tbody>${aas.map(a=>`<tr><td><input type="checkbox" class="bulk-check" value="${a.activityAssignmentId}" onchange="updateBulkBar('aaTable')"></td><td>${escapeHtml(a.activityName)}</td><td>${escapeHtml(a.groupName||'')}</td><td>${escapeHtml(a.className||'คละห้อง')}</td><td>${escapeHtml((users.find(u=>u.userId===a.teacherUserId)||{}).fullName||'')}</td><td class="row-actions">${a.crossClass?`<button class="btn-icon" title="จัดการสมาชิก" onclick="openClubRosterModal('${a.activityAssignmentId}')">👥</button>`:''}<button class="btn-icon" title="ลบ" onclick="deleteAANow('${a.activityAssignmentId}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>
   </div>`;
@@ -956,7 +956,7 @@ async function openClubRosterModal(activityAssignmentId,refreshFn){
 
 /* ---- หน้าลงทะเบียนนักเรียนชุมนุม (สำหรับครูประจำชุมนุมเอง ไม่ต้องผ่านหน้าแอดมิน) ---- */
 async function renderClubRegister(p){
-  const aas=await call('getActivityAssignments',state.token);
+  const aas=await call('getActivityAssignments',state.token,state.period.year,state.period.term);
   const clubs=aas.filter(a=>a.crossClass);
   if(!clubs.length){p.innerHTML='<h2>ลงทะเบียนนักเรียนชุมนุม</h2><div class="card"><p class="muted">ยังไม่มีชุมนุมที่ท่านรับผิดชอบ — หากดูแลชุมนุม กรุณาแจ้งแอดมินให้มอบหมายชุมนุมนั้นให้ท่านก่อน</p></div>';return;}
   p.innerHTML=`<h2>ลงทะเบียนนักเรียนชุมนุม</h2><p class="muted">เลือกชุมนุมที่ท่านรับผิดชอบ แล้วกดจัดการสมาชิก เพื่อเลือกนักเรียนจากทุกห้อง/ทุกระดับชั้นเข้าชุมนุม</p><div class="card"><div class="table-wrap"><table class="data-table"><thead><tr><th>ชุมนุม</th><th>กลุ่ม</th><th></th></tr></thead><tbody>${clubs.map(c=>`<tr><td>${escapeHtml(c.activityName)}</td><td>${escapeHtml(c.groupName||'-')}</td><td><button class="btn btn-primary" onclick="openClubRosterModal('${c.activityAssignmentId}',()=>renderClubRegister($('page')))">👥 จัดการสมาชิก</button></td></tr>`).join('')}</tbody></table></div></div>`;
