@@ -37,7 +37,10 @@ function availableSubjectsForLevel(level,term,subs,classes){const cls=(classes||
 function noSubjectHint_(level,classes){const has=(classes||[]).some(c=>getClassLevelKey_(c)===String(level));return has?null:`ยังไม่มีห้อง ม.${level} ในปีการศึกษา ${state.period.year} ภาคเรียนที่ ${state.period.term} — ให้ผู้ดูแลระบบตั้งค่าห้องก่อน`;}
 
 const $=id=>document.getElementById(id);
-function call(name,...args){return fetch('/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fn:name,args:args})}).then(r=>r.json()).then(res=>{if(!res.ok)throw new Error(res.error||'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์');return res.result;});}
+function call(name,...args){return fetch('/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fn:name,args:args})}).then(async r=>{
+  const t=await r.text();let res;
+  try{res=JSON.parse(t);}catch(e){throw new Error('เซิร์ฟเวอร์ตอบกลับผิดรูปแบบ (HTTP '+r.status+') — ถ้าเห็นข้อความนี้ให้ตรวจ /api บน Cloudflare Pages และลิงก์ Apps Script: '+t.replace(/\s+/g,' ').slice(0,100));}
+  if(!res.ok)throw new Error(res.error||'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์');return res.result;});}
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 // แถวหัวตารางแสดงปีการศึกษา/ภาคเรียนปัจจุบัน แทรกเป็นแถวบนสุดใน <thead> ของตารางกรอกคะแนน/ข้อมูล
 // เพื่อกันครูสับสนว่ากำลังกรอก/แก้ไขข้อมูลของช่วงการศึกษาใดอยู่ (โดยเฉพาะเวลาสลับปี/เทอมแล้วลืมเช็ค)
