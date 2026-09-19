@@ -678,7 +678,7 @@ function renderPP6PageHtml(d){
     .tbl td.l,.tbl th.l{text-align:left}
     .summary-wrap{display:flex;gap:14px;margin-top:0.64cm;align-items:flex-start}
     .summary-tbl{flex:1.3;border-collapse:collapse}
-    .summary-tbl th,.summary-tbl td{border:1px solid #000;padding:2px 5px;line-height:1.1;font-size:14pt}
+    .summary-tbl th,.summary-tbl td{border:1px solid #000;padding:calc(2px + 0.02cm) 5px;line-height:1.1;font-size:14pt;text-align:center}
     .summary-tbl th{background:#f1f5f9}
     .summary-tbl td.l{text-align:left}
     .sig-col{flex:1;display:flex;flex-direction:column;gap:2mm;text-align:center;font-size:14pt;padding-top:1mm}
