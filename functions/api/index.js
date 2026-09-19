@@ -62,12 +62,12 @@ export async function onRequestPost(context) {
     if (hit) return hit;
   }
 
-  const upstream = await postFollowingRedirects_(APPS_SCRIPT_URL, bodyText);
+  const { res: upstream, finalUrl, trace } = await postFollowingRedirects_(APPS_SCRIPT_URL, bodyText);
   const resultText = await upstream.text();
   try { JSON.parse(resultText); }
   catch (e) {
-    const snippet = resultText.replace(/\s+/g, ' ').replace(/<[^>]*>/g, ' ').trim().slice(0, 200);
-    return jsonResponse({ ok: false, error: 'Apps Script ตอบกลับไม่ใช่ JSON (HTTP ' + upstream.status + '): ' + snippet }, 502);
+    const snippet = resultText.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
+    return jsonResponse({ ok: false, error: 'Apps Script ตอบกลับไม่ใช่ JSON [' + (trace || []).join(' ; ') + ']: ' + snippet }, 502);
   }
 
   const response = new Response(resultText, {
@@ -101,24 +101,29 @@ function jsonResponse(obj, status = 200) {
 // ถ้าใช้ redirect:'follow' ปกติ ตัว fetch จะเปลี่ยน POST เป็น GET ให้เองตาม
 // spec (ทำให้ body หาย และไปโดน doGet แทน doPost) ฟังก์ชันนี้จึงตามลิงก์เอง
 // พร้อมคงเมธอด POST และ body เดิมไว้ทุกครั้งที่เจอ redirect
-async function postFollowingRedirects_(url, bodyText, maxHops = 5) {
+async function postFollowingRedirects_(url, bodyText, maxHops = 6) {
   let currentUrl = url;
   let method = 'POST';
   let body = bodyText;
+  const trace = [];
+  const short = u => { try { const x = new URL(u); return x.hostname + x.pathname.replace(/\/s\/[^/]+/, '/s/…').slice(0, 40); } catch (e) { return String(u).slice(0, 40); } };
   for (let i = 0; i < maxHops; i++) {
     const init = { method, redirect: 'manual' };
     if (method === 'POST') { init.headers = { 'Content-Type': 'application/json' }; init.body = body; }
     const res = await fetch(currentUrl, init);
+    trace.push(method + ' ' + short(currentUrl) + ' → ' + res.status);
     if ([301, 302, 303, 307, 308].includes(res.status)) {
       const location = res.headers.get('location');
-      if (!location) return res;
+      if (!location) return { res, finalUrl: currentUrl, trace };
       currentUrl = new URL(location, currentUrl).toString();
-      // Apps Script: doPost ทำงานตอน POST ครั้งแรกแล้ว และตอบ 302 ไปยัง URL ที่เก็บ "ผลลัพธ์" ซึ่งต้องเรียกด้วย GET
-      // (ยิง POST ซ้ำไปที่ URL นั้นจะได้หน้า HTML error 405) — เฉพาะ 307/308 เท่านั้นที่ต้องคง POST เดิม
-      if (res.status !== 307 && res.status !== 308) { method = 'GET'; body = undefined; }
+      // - ถ้าปลายทางเป็น script.google.com (เช่น /a/macros/<โดเมน>/s/.../exec ของบัญชี Workspace) ต้องคง POST + body เดิม
+      //   ไม่งั้นจะไปตก doGet แล้วได้หน้า HTML กลับมา
+      // - ถ้าปลายทางเป็น *.googleusercontent.com นั่นคือลิงก์เก็บ "ผลลัพธ์" ที่ doPost ทำเสร็จแล้ว ต้องเรียกด้วย GET
+      const host = new URL(currentUrl).hostname;
+      if (host.endsWith('googleusercontent.com')) { method = 'GET'; body = undefined; }
       continue;
     }
-    return res;
+    return { res, finalUrl: currentUrl, trace };
   }
   throw new Error('redirect ไปเรื่อยๆ เกิน ' + maxHops + ' ครั้ง');
 }
