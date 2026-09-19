@@ -62,13 +62,13 @@ export async function onRequestPost(context) {
     if (hit) return hit;
   }
 
-  const upstream = await fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: bodyText,
-    redirect: 'follow'
-  });
+  const upstream = await postFollowingRedirects_(APPS_SCRIPT_URL, bodyText);
   const resultText = await upstream.text();
+  try { JSON.parse(resultText); }
+  catch (e) {
+    const snippet = resultText.replace(/\s+/g, ' ').replace(/<[^>]*>/g, ' ').trim().slice(0, 200);
+    return jsonResponse({ ok: false, error: 'Apps Script ตอบกลับไม่ใช่ JSON (HTTP ' + upstream.status + '): ' + snippet }, 502);
+  }
 
   const response = new Response(resultText, {
     status: upstream.status,
@@ -95,6 +95,32 @@ function jsonResponse(obj, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json' }
   });
+}
+
+// Apps Script exec URL มักตอบกลับด้วย HTTP 302 ไปยัง URL เนื้อหาจริง
+// ถ้าใช้ redirect:'follow' ปกติ ตัว fetch จะเปลี่ยน POST เป็น GET ให้เองตาม
+// spec (ทำให้ body หาย และไปโดน doGet แทน doPost) ฟังก์ชันนี้จึงตามลิงก์เอง
+// พร้อมคงเมธอด POST และ body เดิมไว้ทุกครั้งที่เจอ redirect
+async function postFollowingRedirects_(url, bodyText, maxHops = 5) {
+  let currentUrl = url;
+  let method = 'POST';
+  let body = bodyText;
+  for (let i = 0; i < maxHops; i++) {
+    const init = { method, redirect: 'manual' };
+    if (method === 'POST') { init.headers = { 'Content-Type': 'application/json' }; init.body = body; }
+    const res = await fetch(currentUrl, init);
+    if ([301, 302, 303, 307, 308].includes(res.status)) {
+      const location = res.headers.get('location');
+      if (!location) return res;
+      currentUrl = new URL(location, currentUrl).toString();
+      // Apps Script: doPost ทำงานตอน POST ครั้งแรกแล้ว และตอบ 302 ไปยัง URL ที่เก็บ "ผลลัพธ์" ซึ่งต้องเรียกด้วย GET
+      // (ยิง POST ซ้ำไปที่ URL นั้นจะได้หน้า HTML error 405) — เฉพาะ 307/308 เท่านั้นที่ต้องคง POST เดิม
+      if (res.status !== 307 && res.status !== 308) { method = 'GET'; body = undefined; }
+      continue;
+    }
+    return res;
+  }
+  throw new Error('redirect ไปเรื่อยๆ เกิน ' + maxHops + ' ครั้ง');
 }
 
 async function sha256Hex(text) {
