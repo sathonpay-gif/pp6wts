@@ -64,6 +64,7 @@ function changePeriodYear(){const y=$('periodYear').value;const terms=(state.per
 const MENU=[
   {route:'dashboard',icon:'📊',label:'Dashboard'},
   {route:'scores',icon:'📝',label:'กรอกคะแนนรายวิชา'},
+  {route:'pp5',icon:'📗',label:'กรอกคะแนน ปพ.5 (รายข้อ)'},
   {route:'myTeaching',icon:'📚',label:'ลงทะเบียนวิชาที่สอน'},
   {route:'activities',icon:'🎯',label:'กิจกรรมพัฒนาผู้เรียน'},
   {route:'clubRegister',icon:'🧑‍🤝‍🧑',label:'ลงทะเบียนนักเรียนชุมนุม'},
@@ -90,7 +91,7 @@ function renderShell(){
   const years=[...new Set((state.periods||[]).map(x=>String(x.year)))];
   const terms=(state.periods||[]).filter(x=>String(x.year)===String(state.period.year)).map(x=>String(x.term));
   const termOptions=terms.map(t=>`<option value="${escapeHtml(t)}" ${String(t)===String(state.period.term)?'selected':''}>ภาคเรียน ${escapeHtml(t)}</option>`).join('');
-  $('appView').innerHTML=`<div class="topbar"><div class="brand-wrap"><div class="brand-logo brand-logo-large"><img src="data:image/png;base64,${SCHOOL_LOGO_B64}" alt="ตราโรงเรียน"></div><div class="brand"><strong>ระบบ ปพ.6</strong><small>โรงเรียนวัดไตรสามัคคี</small></div></div><div class="topbar-right"><div class="period-picker"><span class="period-icon">📅</span><div><label>ช่วงการศึกษา</label><div class="period-controls"><select id="periodYear" onchange="changePeriodYear()">${years.map(y=>`<option value="${escapeHtml(y)}" ${String(y)===String(state.period.year)?'selected':''}>${escapeHtml(y)}</option>`).join('')}</select><select id="periodTerm" onchange="changeAcademicPeriod()">${termOptions}</select></div></div></div><div class="system-status"><span class="status-dot"></span> ระบบพร้อมใช้งาน</div><div class="user-pill"><span class="user-avatar">${escapeHtml(initial)}</span><span class="user-meta"><span class="user-name">${escapeHtml(state.me.fullName)}</span><span class="user-role">${roleText}</span></span></div><button class="menu-toggle" onclick="toggleSidebar()" aria-label="เมนู">☰</button><button class="btn btn-secondary top-logout" onclick="logout()">ออกจากระบบ</button></div></div><div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-school"><img src="data:image/png;base64,${SCHOOL_LOGO_B64}" alt="ตราโรงเรียน"><div><b>โรงเรียนวัดไตรสามัคคี</b><small>ระบบ ปพ.6</small></div></div><div class="sidebar-section">เมนูหลัก</div>${makeMenu(MENU)}${adminHtml}<div class="sidebar-spacer"></div><button class="menu-btn" onclick="showPasswordModal()">${iconLabel('⚿','เปลี่ยนรหัสผ่าน')}</button><div class="sidebar-footer">โรงเรียนวัดไตรสามัคคี · ระบบทะเบียนผลการเรียน</div></aside><main id="page" class="content"></main></div>`;
+  $('appView').innerHTML=`<div class="topbar"><div class="brand-wrap"><div class="brand-logo brand-logo-large"><img src="data:image/png;base64,${SCHOOL_LOGO_B64}" alt="ตราโรงเรียน"></div><div class="brand"><strong>ระบบ ปพ.6</strong><small>โรงเรียนวัดไตรสามัคคี</small></div></div><div class="topbar-right"><div class="period-picker"><span class="period-icon">📅</span><div><label>ช่วงการศึกษา</label><div class="period-controls"><select id="periodYear" onchange="changePeriodYear()">${years.map(y=>`<option value="${escapeHtml(y)}" ${String(y)===String(state.period.year)?'selected':''}>${escapeHtml(y)}</option>`).join('')}</select><select id="periodTerm" onchange="changeAcademicPeriod()">${termOptions}</select></div></div></div><div class="system-status"><span class="status-dot"></span> ระบบพร้อมใช้งาน</div><div class="user-pill"><span class="user-avatar">${escapeHtml(initial)}</span><span class="user-meta"><span class="user-name">${escapeHtml(state.me.fullName)}</span><span class="user-role">${roleText}</span></span></div><button class="menu-toggle" onclick="toggleSidebar()" aria-label="เมนู">☰</button><button class="btn btn-secondary top-logout" onclick="logout()">ออกจากระบบ</button></div></div><div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-school"><img src="data:image/png;base64,${SCHOOL_LOGO_B64}" alt="ตราโรงเรียน"><div><b>โรงเรียนวัดไตรสามัคคี</b><small>ระบบ ปพ.6</small></div></div><div class="sidebar-period"><span>📅</span><div><small>กำลังทำงานใน</small><b>ปีการศึกษา ${escapeHtml(state.period.year)} · ภาคเรียน ${escapeHtml(state.period.term)}</b></div></div><div class="sidebar-section">เมนูหลัก</div>${makeMenu(MENU)}${adminHtml}<div class="sidebar-spacer"></div><button class="menu-btn" onclick="showPasswordModal()">${iconLabel('⚿','เปลี่ยนรหัสผ่าน')}</button><div class="sidebar-footer">โรงเรียนวัดไตรสามัคคี · ระบบทะเบียนผลการเรียน</div></aside><main id="page" class="content"></main></div>`;
 }
 
 function toggleSidebar(){$('sidebar').classList.toggle('open');}
@@ -102,6 +103,7 @@ async function renderRoute(){
     switch(state.route){
       case'dashboard':await renderDashboard(p);break;
       case'scores':await renderScores(p);break;
+      case'pp5':await renderPP5(p);break;
       case'myTeaching':await renderMyTeaching(p);break;
       case'activities':await renderActivities(p);break;
       case'clubRegister':await renderClubRegister(p);break;
@@ -1052,3 +1054,314 @@ async function runCsvImport(fnName){
 }
 
 showLogin();if(state.token)openApp();
+
+/* ===================== ปพ.5 module (รวมเข้ากับ app.js แล้ว) ===================== */
+
+const PP5_MARK_CYCLE = ['/', 'ป', 'ล', 'ข', ''];
+
+/* ---------------- หน้าเลือกวิชา ---------------- */
+async function renderPP5(p) {
+  const assigns = await call('getTeacherAssignments', state.token, state.period.year, state.period.term);
+  if (!assigns.length) { p.innerHTML = '<div class="card"><h2>กรอกคะแนน ปพ.5</h2><p class="muted">ยังไม่มีรายวิชาที่กำหนดให้บัญชีนี้</p></div>'; return; }
+  p.innerHTML = `<h2>กรอกคะแนน ปพ.5 (รายข้อ)</h2>${periodBannerHtml()}
+  <div class="card"><div class="toolbar">
+    <select id="pp5AssignSelect" onchange="loadPP5Workspace()"><option value="">-- เลือกวิชา / ห้อง --</option>${assigns.map(a => `<option value="${a.assignmentId}">${escapeHtml(a.subjectCode + ' ' + a.subjectName + ' · ' + a.className)}</option>`).join('')}</select>
+    <button class="btn btn-secondary" onclick="openPP5ConfigModal()" id="pp5ConfigBtn" disabled>⚙ สัดส่วน/เกณฑ์</button>
+    <button class="btn btn-secondary" onclick="openPP5ItemsModal()" id="pp5ItemsBtn" disabled>📋 ตัวชี้วัด/คะแนนเต็ม</button>
+    <button class="btn btn-secondary" onclick="openPP5AttendanceModal()" id="pp5AttBtn" disabled>⏱ เวลาเรียน</button>
+    <button id="pp5SaveBtn" class="btn btn-primary" onclick="savePP5ScoreGrid()" disabled>บันทึกคะแนน</button>
+  </div>
+  <div id="pp5Info"></div>
+  <div id="pp5Grid" class="table-wrap"></div>
+  <div id="pp5Stats"></div>
+  </div>`;
+  window._pp5Assignments = assigns;
+}
+
+/* ---------------- โหลดข้อมูลวิชา + วาดตาราง ---------------- */
+async function loadPP5Workspace() {
+  const id = $('pp5AssignSelect').value;
+  ['pp5ConfigBtn', 'pp5ItemsBtn', 'pp5AttBtn', 'pp5SaveBtn'].forEach(b => $(b).disabled = !id);
+  if (!id) { $('pp5Grid').innerHTML = ''; $('pp5Info').innerHTML = ''; $('pp5Stats').innerHTML = ''; return; }
+  $('pp5Grid').innerHTML = ''; $('pp5Grid').appendChild(showSpinner());
+  const data = await call('getPP5ScoreEntry', state.token, id);
+  window._pp5Data = data; window._pp5AssignmentId = id;
+  renderPP5Info(data);
+  renderPP5Grid(data);
+}
+
+function pp5ItemSumWarningHtml(data) {
+  const itemSum = round2Local_(sumLocal_(data.items.map(i => Number(i.maxScore) || 0)));
+  const during = Number(data.config.duringRatio);
+  if (itemSum === during) return `<span class="alert-inline alert-ok" style="display:inline-block">รวมคะแนนเต็มรายข้อ ${itemSum} = คะแนนระหว่างเรียน ${during} ✓</span>`;
+  if (itemSum > during) return `<span class="alert-inline alert-danger" style="display:inline-block">คะแนนเต็มรายข้อรวม ${itemSum} เกินคะแนนระหว่างเรียน (${during}) อยู่ ${round2Local_(itemSum - during)} คะแนน — ตัวเลขจะเป็นสีแดง</span>`;
+  return `<span class="alert-inline" style="display:inline-block;background:#fff8e1;color:#8a6100;border:1px solid #ffe08a">ยังขาดอีก ${round2Local_(during - itemSum)} คะแนน จากคะแนนระหว่างเรียน ${during}</span>`;
+}
+
+function renderPP5Info(data) {
+  $('pp5Info').innerHTML = `<div class="toolbar" style="margin-bottom:8px">
+    <span class="alert-inline alert-ok" style="display:inline-block">ประเภทวิชา: ${escapeHtml(data.subjectType)}</span>
+    <span class="alert-inline" style="display:inline-block;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe">สัดส่วน ระหว่างเรียน ${data.config.duringRatio} : กลางภาค ${data.config.midtermRatio} : ปลายภาค ${data.config.finalRatio}</span>
+    ${pp5ItemSumWarningHtml(data)}
+  </div>`;
+}
+
+function renderPP5Grid(data) {
+  const items = data.items;
+  const itemHeadCols = items.map(it => `<th title="${escapeHtml(it.label)}">ข้อ ${escapeHtml(String(it.indicatorNo))}<br><small>${it.maxScore}</small></th>`).join('');
+  const rows = data.rows.map(r => {
+    const disabled = r.status === 'ขาดเรียนนาน' || r.status === 'ย้ายออก';
+    const itemCells = items.map(it => `<td><input class="score-input pp5-item" data-item="${escapeHtml(String(it.indicatorNo))}" data-max="${it.maxScore}" type="number" min="0" max="${it.maxScore}" step="0.01" value="${r.itemScores[it.indicatorNo] ?? ''}" ${disabled ? 'disabled' : ''}></td>`).join('');
+    return `<tr data-enr="${escapeHtml(r.enrollmentId || '')}" data-student="${escapeHtml(r.studentId)}">
+      <td>${escapeHtml(String(r.classNo))}</td>
+      <td class="l">${escapeHtml(r.fullName)}${r.status ? `<br><small class="muted">${escapeHtml(r.status)}</small>` : ''}</td>
+      ${itemCells}
+      <td><input class="score-input pp5-mid" type="number" min="0" step="0.01" value="${r.midterm ?? ''}" ${disabled ? 'disabled' : ''}></td>
+      <td><input class="score-input pp5-final" type="number" min="0" step="0.01" value="${r.final ?? ''}" ${disabled ? 'disabled' : ''}></td>
+      <td class="pp5-total"></td>
+      <td><input type="checkbox" class="pp5-incomplete" ${r.incomplete ? 'checked' : ''} title="ติด ร (ส่งไม่ครบ)" ${disabled ? 'disabled' : ''}></td>
+    </tr>`;
+  }).join('');
+  $('pp5Grid').innerHTML = `<table class="data-table pp5-score-table"><thead>${periodHeadRow(6 + items.length)}
+    <tr><th>ที่</th><th>ชื่อ-สกุล</th>${itemHeadCols}<th>กลางภาค</th><th>ปลายภาค</th><th>รวม</th><th>ร</th></tr>
+    </thead><tbody>${rows}</tbody></table>`;
+  pp5AttachGridBehaviour();
+  pp5RecalcTotals();
+}
+
+/* ---------------- คีย์บอร์ดแบบ Excel + คำนวณผลรวมสด ---------------- */
+function pp5AttachGridBehaviour() {
+  const inputs = [...document.querySelectorAll('#pp5Grid input[type="number"]')];
+  inputs.forEach((el, idx) => {
+    el.addEventListener('input', pp5RecalcTotals);
+    el.addEventListener('keydown', e => {
+      const cellsPerRow = document.querySelectorAll('#pp5Grid tbody tr:first-child input[type="number"]').length;
+      let target = null;
+      if (e.key === 'Enter') { target = inputs[idx + (e.shiftKey ? -cellsPerRow : cellsPerRow)]; }
+      else if (e.key === 'ArrowDown') { target = inputs[idx + cellsPerRow]; }
+      else if (e.key === 'ArrowUp') { target = inputs[idx - cellsPerRow]; }
+      else return;
+      if (target) { e.preventDefault(); target.focus(); target.select(); }
+    });
+  });
+}
+
+function pp5RecalcTotals() {
+  document.querySelectorAll('#pp5Grid tbody tr').forEach(tr => {
+    const items = [...tr.querySelectorAll('.pp5-item')].map(i => Number(i.value) || 0);
+    const mid = Number(tr.querySelector('.pp5-mid').value) || 0;
+    const fin = Number(tr.querySelector('.pp5-final').value) || 0;
+    const total = round2Local_(sumLocal_(items) + mid + fin);
+    tr.querySelector('.pp5-total').textContent = total;
+    // เช็คคะแนนรายข้อเกิน maxScore ของตัวเอง → แดง (เหมือนไฟล์ Excel เดิม)
+    tr.querySelectorAll('.pp5-item').forEach(i => {
+      const over = Number(i.value) > Number(i.dataset.max);
+      i.style.color = over ? '#c0392b' : '';
+      i.style.fontWeight = over ? '700' : '';
+    });
+  });
+}
+
+/* ---------------- บันทึกคะแนน ---------------- */
+async function savePP5ScoreGrid() {
+  const id = window._pp5AssignmentId; if (!id) return;
+  const btn = $('pp5SaveBtn'); btn.disabled = true; const orig = btn.textContent; btn.textContent = 'กำลังบันทึก...';
+  const rows = [...document.querySelectorAll('#pp5Grid tbody tr')].map(tr => {
+    if (!tr.dataset.enr) return null;
+    const itemScores = {};
+    tr.querySelectorAll('.pp5-item').forEach(i => { if (i.value !== '') itemScores[i.dataset.item] = Number(i.value); });
+    return {
+      enrollmentId: tr.dataset.enr, itemScores: itemScores,
+      midterm: tr.querySelector('.pp5-mid').value, final: tr.querySelector('.pp5-final').value,
+      incomplete: tr.querySelector('.pp5-incomplete').checked
+    };
+  }).filter(Boolean);
+  try {
+    const r = await call('savePP5Scores', state.token, id, { rows: rows });
+    toast('บันทึกคะแนน ปพ.5 แล้ว (ผลไหลขึ้น ปพ.6 อัตโนมัติ)', true);
+    pp5RenderStats(r.stats);
+    await loadPP5Workspace();
+  } catch (e) { toast(e.message); }
+  finally { btn.disabled = false; btn.textContent = orig; }
+}
+
+function pp5RenderStats(stats) {
+  if (!stats) { $('pp5Stats').innerHTML = ''; return; }
+  const dist = Object.keys(stats.distribution || {}).map(k => `<span class="soft-badge" style="margin-right:6px">${escapeHtml(String(k))}: ${stats.distribution[k]} คน</span>`).join('');
+  $('pp5Stats').innerHTML = `<div class="card" style="margin-top:12px"><h3>สถิติวิชานี้ (ไม่นับ ขาดเรียนนาน/ย้ายออก)</h3>
+    <div class="toolbar" style="margin-bottom:8px"><span class="meta-chip">จำนวน ${stats.n} คน</span><span class="meta-chip">ค่าเฉลี่ย ${stats.mean}</span><span class="meta-chip">SD ${stats.sd}</span><span class="meta-chip">ต่ำสุด ${stats.min}</span><span class="meta-chip">สูงสุด ${stats.max}</span></div>
+    <div>${dist}</div></div>`;
+}
+
+/* ---------------- Modal: สัดส่วนคะแนน + เกณฑ์ระดับ (config) ---------------- */
+function openPP5ConfigModal() {
+  const data = window._pp5Data; if (!data) return;
+  const c = data.config;
+  $('page').insertAdjacentHTML('beforeend', `<div class="modal" id="pp5ConfigModal"><div class="modal-card" style="max-width:520px">
+    <h3>สัดส่วนคะแนน</h3>
+    <div class="toolbar" style="margin-bottom:10px">
+      ${[[70,30],[80,20],[60,40],[100,0]].map(([d,f]) => `<button class="btn btn-secondary" onclick="pp5ApplyRatioPreset(${d},${f})">${d}:${f}</button>`).join('')}
+    </div>
+    <div class="grid grid-2">
+      <div class="field"><label>ระหว่างเรียน</label><input id="pp5During" type="number" min="0" max="100" value="${c.duringRatio}" oninput="pp5RatioSumCheck()"></div>
+      <div class="field"><label>กลางภาค</label><input id="pp5Midterm" type="number" min="0" max="100" value="${c.midtermRatio}" oninput="pp5RatioSumCheck()"></div>
+      <div class="field"><label>ปลายภาค</label><input id="pp5Final" type="number" min="0" max="100" value="${c.finalRatio}" oninput="pp5RatioSumCheck()"></div>
+    </div>
+    <div id="pp5RatioSumMsg" style="margin:8px 0"></div>
+    <p class="muted">เกณฑ์ระดับผลการเรียน / คุณลักษณะ / เวลาเรียน ใช้ค่ามาตรฐานของโรงเรียน (แก้ไขได้ในเฟสถัดไป — หน้าตั้งค่ากลาง)</p>
+    <div class="toolbar" style="margin-top:12px"><button class="btn btn-primary" onclick="savePP5ConfigFromModal()">บันทึกสัดส่วน</button><button class="btn btn-secondary" onclick="closeModal('pp5ConfigModal')">ยกเลิก</button></div>
+  </div></div>`);
+  pp5RatioSumCheck();
+}
+function pp5ApplyRatioPreset(d, f) { $('pp5During').value = d; $('pp5Midterm').value = 0; $('pp5Final').value = f; pp5RatioSumCheck(); }
+function pp5RatioSumCheck() {
+  const sum = round2Local_((Number($('pp5During').value) || 0) + (Number($('pp5Midterm').value) || 0) + (Number($('pp5Final').value) || 0));
+  const ok = sum === 100;
+  $('pp5RatioSumMsg').innerHTML = `<span class="alert-inline ${ok ? 'alert-ok' : 'alert-danger'}" style="display:inline-block">ผลรวมสัดส่วนต้องเท่ากับ 100 (ปัจจุบัน ${sum})</span>`;
+  return ok;
+}
+async function savePP5ConfigFromModal() {
+  if (!pp5RatioSumCheck()) return toast('ผลรวมสัดส่วนต้องเท่ากับ 100 ก่อนบันทึก');
+  const data = window._pp5Data;
+  const config = Object.assign({}, data.config, {
+    duringRatio: Number($('pp5During').value), midtermRatio: Number($('pp5Midterm').value), finalRatio: Number($('pp5Final').value)
+  });
+  try {
+    await call('savePP5Config', state.token, window._pp5AssignmentId, config);
+    toast('บันทึกสัดส่วนแล้ว คำนวณเกรดใหม่ทั้งวิชาเรียบร้อย', true);
+    closeModal('pp5ConfigModal');
+    await loadPP5Workspace();
+  } catch (e) { toast(e.message); }
+}
+
+/* ---------------- Modal: ตัวชี้วัด + คะแนนเต็มรายข้อ ---------------- */
+async function openPP5ItemsModal() {
+  const id = window._pp5AssignmentId; if (!id) return;
+  const [indicators, items] = await Promise.all([call('getPP5Indicators', state.token, id), call('getPP5ScoreItems', state.token, id)]);
+  const merged = indicators.length ? indicators.map(ind => {
+    const it = items.find(i => String(i.IndicatorNo) === String(ind.No)) || {};
+    return { no: ind.No, standard: ind.Standard, text: ind.Text, label: it.Label || '', maxScore: it.MaxScore ?? '' };
+  }) : [{ no: 1, standard: '', text: '', label: '', maxScore: '' }];
+  $('page').insertAdjacentHTML('beforeend', `<div class="modal" id="pp5ItemsModal"><div class="modal-card" style="max-width:760px">
+    <h3>ตัวชี้วัด และ คะแนนเต็มรายข้อ</h3>
+    <div class="table-wrap"><table class="data-table" id="pp5ItemsTable"><thead><tr><th>ข้อที่</th><th>มาตรฐาน/หัวข้อ</th><th>ตัวชี้วัด</th><th>คะแนนเต็ม</th><th></th></tr></thead>
+    <tbody>${merged.map(m => pp5ItemRowHtml(m)).join('')}</tbody></table></div>
+    <div class="toolbar" style="margin-top:8px"><button class="btn btn-secondary" onclick="pp5AddItemRow()">➕ เพิ่มข้อ</button></div>
+    <div class="toolbar" style="margin-top:12px"><button class="btn btn-primary" onclick="savePP5ItemsFromModal()">บันทึก</button><button class="btn btn-secondary" onclick="closeModal('pp5ItemsModal')">ยกเลิก</button></div>
+  </div></div>`);
+}
+function pp5ItemRowHtml(m) {
+  return `<tr><td><input type="number" class="pp5i-no" value="${m.no}" style="width:60px"></td><td><input class="pp5i-std" value="${escapeHtml(m.standard || '')}"></td><td><input class="pp5i-text" value="${escapeHtml(m.text || '')}"></td><td><input type="number" class="pp5i-max" value="${m.maxScore}" style="width:80px"></td><td><button class="btn-icon" onclick="this.closest('tr').remove()">🗑️</button></td></tr>`;
+}
+function pp5AddItemRow() {
+  const tbody = document.querySelector('#pp5ItemsTable tbody');
+  const nextNo = tbody.querySelectorAll('tr').length + 1;
+  tbody.insertAdjacentHTML('beforeend', pp5ItemRowHtml({ no: nextNo, standard: '', text: '', label: '', maxScore: '' }));
+}
+async function savePP5ItemsFromModal() {
+  const rows = [...document.querySelectorAll('#pp5ItemsTable tbody tr')].map(tr => ({
+    no: Number(tr.querySelector('.pp5i-no').value),
+    standard: tr.querySelector('.pp5i-std').value,
+    text: tr.querySelector('.pp5i-text').value,
+    maxScore: Number(tr.querySelector('.pp5i-max').value) || 0
+  }));
+  const indicators = rows.map(r => ({ no: r.no, standard: r.standard, text: r.text }));
+  const items = rows.map(r => ({ indicatorNo: r.no, label: r.text, maxScore: r.maxScore }));
+  try {
+    const r = await call('savePP5IndicatorsAndItems', state.token, window._pp5AssignmentId, { indicators: indicators, items: items });
+    toast(r.warning ? ('บันทึกแล้ว — ' + r.warning) : 'บันทึกตัวชี้วัดแล้ว', true);
+    closeModal('pp5ItemsModal');
+    await loadPP5Workspace();
+  } catch (e) { toast(e.message); }
+}
+
+/* ---------------- helper เลขทศนิยม (ฝั่ง client เอาไว้โชว์ผลรวมสด — ตัวเลขจริงคำนวณซ้ำฝั่งเซิร์ฟเวอร์เสมอ) ---------------- */
+function round2Local_(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+function sumLocal_(arr) { return (arr || []).reduce((a, b) => a + (Number(b) || 0), 0); }
+
+async function openPP5AttendanceModal() {
+  const id = window._pp5AssignmentId; if (!id) return;
+  $('page').insertAdjacentHTML('beforeend', `<div class="modal" id="pp5AttModal"><div class="modal-card" style="max-width:95vw;width:95vw">
+    <h3>เวลาเรียน</h3><div id="pp5AttHead"></div><div id="pp5AttWrap" class="table-wrap"></div>
+    <div class="toolbar" style="margin-top:12px"><button class="btn btn-primary" onclick="savePP5AttendanceGrid()">บันทึกเวลาเรียน</button><button class="btn btn-secondary" onclick="closeModal('pp5AttModal')">ปิด</button></div>
+  </div></div>`);
+  const data = await call('getPP5AttendanceEntry', state.token, id);
+  window._pp5AttData = data;
+  $('pp5AttHead').innerHTML = `<div class="alert-inline alert-ok" style="display:inline-block;margin-bottom:8px">เวลาเรียน [${data.totalHours}] : เกณฑ์ผ่าน [${data.passPercent}%] — คลิกช่องเพื่อวนค่า / มา / ป่วย / ลา / ขาด</div>`;
+  pp5RenderAttendanceGrid(data);
+}
+
+function pp5RenderAttendanceGrid(data) {
+  const weekHead = Array.from({ length: data.totalHours }, (_, i) => `<th class="pp5-att-wk" title="คลิกเพื่อเติมทั้งคอลัมน์" onclick="pp5FillColumn(${i})">${i + 1}</th>`).join('');
+  const rows = data.rows.map(r => {
+    const marks = [...(r.marks || [])]; while (marks.length < data.totalHours) marks.push('');
+    const cells = marks.map((m, i) => `<td class="pp5-att-cell" data-idx="${i}" onclick="pp5CycleMark(this)">${escapeHtml(m || '')}</td>`).join('');
+    return `<tr data-enr="${escapeHtml(r.enrollmentId || '')}">
+      <td class="l">${escapeHtml(String(r.classNo))} ${escapeHtml(r.fullName)}</td>
+      <td><button class="btn-icon" title="เติมทั้งแถว" onclick="pp5FillRow(this)">➡️</button></td>
+      ${cells}
+      <td class="pp5-att-present">${r.summary.present}</td><td class="pp5-att-sick">${r.summary.sick}</td><td class="pp5-att-leave">${r.summary.leave}</td><td class="pp5-att-absent">${r.summary.absent}</td>
+      <td class="pp5-att-percent">${r.summary.percent}</td><td class="pp5-att-flag">${r.summary.msFlag}</td>
+      <td class="pp5-att-warn"></td>
+    </tr>`;
+  }).join('');
+  $('pp5AttWrap').innerHTML = `<table class="data-table pp5-att-table"><thead>
+    <tr><th>นักเรียน</th><th></th>${weekHead}<th>มา</th><th>ป่วย</th><th>ลา</th><th>ขาด</th><th>ร้อยละ</th><th>มส</th><th></th></tr>
+    </thead><tbody>${rows}</tbody></table>`;
+  document.querySelectorAll('#pp5AttWrap tbody tr').forEach(tr => pp5AttRecalcRow(tr, data.totalHours, data.passPercent));
+}
+
+function pp5CycleMark(el) {
+  const cur = el.textContent.trim();
+  const idx = PP5_MARK_CYCLE.indexOf(cur);
+  el.textContent = PP5_MARK_CYCLE[(idx + 1) % PP5_MARK_CYCLE.length];
+  pp5AttRecalcRow(el.closest('tr'), window._pp5AttData.totalHours, window._pp5AttData.passPercent);
+}
+function pp5FillColumn(colIdx) {
+  const mark = window.prompt('ใส่ค่าทั้งคอลัมน์นี้ (/, ป, ล, ข หรือเว้นว่าง)', '/');
+  if (mark === null) return;
+  document.querySelectorAll(`#pp5AttWrap tbody tr td.pp5-att-cell[data-idx="${colIdx}"]`).forEach(td => td.textContent = mark);
+  document.querySelectorAll('#pp5AttWrap tbody tr').forEach(tr => pp5AttRecalcRow(tr, window._pp5AttData.totalHours, window._pp5AttData.passPercent));
+}
+function pp5FillRow(btn) {
+  const mark = window.prompt('ใส่ค่าทั้งแถวนี้ (/, ป, ล, ข หรือเว้นว่าง)', '/');
+  if (mark === null) return;
+  const tr = btn.closest('tr');
+  tr.querySelectorAll('.pp5-att-cell').forEach(td => td.textContent = mark);
+  pp5AttRecalcRow(tr, window._pp5AttData.totalHours, window._pp5AttData.passPercent);
+}
+
+// คำนวณสรุปฝั่ง client ไว้โชว์สดๆ (ใช้กติกาเริ่มต้น มา=1 ป่วย/ลา/ขาด=0 ตามค่ามาตรฐานโรงเรียน
+// ถ้าโรงเรียนปรับน้ำหนักในหน้าตั้งค่ากลาง ตัวเลขจริงยึดตามที่เซิร์ฟเวอร์คำนวณตอนบันทึกเสมอ)
+function pp5AttRecalcRow(tr, totalHours, passPercent) {
+  const marks = [...tr.querySelectorAll('.pp5-att-cell')].map(td => td.textContent.trim());
+  const present = marks.filter(m => m === '/').length, sick = marks.filter(m => m === 'ป').length,
+    leave = marks.filter(m => m === 'ล').length, absent = marks.filter(m => m === 'ข').length;
+  const percent = totalHours ? round2Local_((present / totalHours) * 100) : 0;
+  const msFlag = percent < passPercent ? 'มส' : '-';
+  tr.querySelector('.pp5-att-present').textContent = present;
+  tr.querySelector('.pp5-att-sick').textContent = sick;
+  tr.querySelector('.pp5-att-leave').textContent = leave;
+  tr.querySelector('.pp5-att-absent').textContent = absent;
+  tr.querySelector('.pp5-att-percent').textContent = percent;
+  const flagCell = tr.querySelector('.pp5-att-flag'); flagCell.textContent = msFlag;
+  flagCell.style.color = msFlag === 'มส' ? '#c0392b' : ''; flagCell.style.fontWeight = msFlag === 'มส' ? '700' : '';
+  const complete = (present + sick + leave + absent) === totalHours;
+  tr.querySelector('.pp5-att-warn').innerHTML = complete ? '' : '<span title="เช็คชื่อไม่ครบ" style="color:#c0392b">⚠</span>';
+}
+
+async function savePP5AttendanceGrid() {
+  const id = window._pp5AssignmentId; if (!id) return;
+  const rows = [...document.querySelectorAll('#pp5AttWrap tbody tr')].map(tr => {
+    if (!tr.dataset.enr) return null;
+    const marks = [...tr.querySelectorAll('.pp5-att-cell')].map(td => td.textContent.trim());
+    return { enrollmentId: tr.dataset.enr, marks: marks };
+  }).filter(Boolean);
+  try {
+    const r = await call('savePP5Attendance', state.token, id, { rows: rows });
+    toast('บันทึกเวลาเรียนแล้ว (คำนวณเกรดใหม่ทั้งวิชาแล้ว)', true);
+    pp5RenderStats(r.stats);
+    closeModal('pp5AttModal');
+    await loadPP5Workspace();
+  } catch (e) { toast(e.message); }
+}
