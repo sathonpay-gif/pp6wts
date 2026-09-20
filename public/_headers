@@ -1,0 +1,24 @@
+# วางไฟล์นี้ (ชื่อ _headers ไม่มีนามสกุล) ไว้ที่ระดับเดียวกับ index.html
+# (โฟลเดอร์ public/) — Cloudflare Pages จะอ่านไฟล์นี้เองอัตโนมัติตอน deploy
+# ไม่ต้องตั้งค่าอะไรเพิ่มในหน้า dashboard
+#
+# ผลที่ได้: ผู้ใช้ที่เคยเข้าเว็บนี้แล้ว (ครู/แอดมินที่เข้าทุกวัน) เบราว์เซอร์จะ
+# ใช้ app.js/style.css ที่เก็บไว้ในเครื่องแทนการโหลดจากเน็ตใหม่ทุกครั้ง —
+# เข้าเว็บครั้งที่ 2 เป็นต้นไปจะเร็วขึ้นชัดเจน โดยเฉพาะเน็ตโรงเรียน/มือถือที่ช้า
+#
+# must-revalidate = ถ้าไฟล์หมดอายุ เบราว์เซอร์จะถามเซิร์ฟเวอร์ก่อนว่าเปลี่ยนไหม
+# (เช็คด้วย ETag ไม่ใช่โหลดใหม่ทั้งไฟล์) เวลาท่าน deploy โค้ดใหม่ ผู้ใช้จะได้
+# เวอร์ชันใหม่ภายในเวลา max-age ที่กำหนดไว้ ไม่ค้างเวอร์ชันเก่าถาวร
+
+/app.js
+  Cache-Control: public, max-age=300, must-revalidate
+
+/style.css
+  Cache-Control: public, max-age=86400, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=60, must-revalidate
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: same-origin
