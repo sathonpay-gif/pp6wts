@@ -875,11 +875,11 @@ function renderPP6PageHtml(d){
     .info{display:flex;justify-content:space-between;align-items:center;margin:4px 0 3px;gap:10px;font-size:14pt}
     .info .box{background:#e5e7eb;border:1px solid #94a3b8;border-radius:4px;padding:1px 12px;font-weight:700}
     .tbl{width:100%;border-collapse:collapse}
-    .tbl th,.tbl td{border:1px solid #000;padding:calc(0.47mm + 0.05cm) 3px;line-height:1;font-size:14pt;text-align:center;vertical-align:middle}
+    .tbl th,.tbl td{border:1px solid #000;padding:calc(0.47mm + 0.02cm) 3px;line-height:1;font-size:14pt;text-align:center;vertical-align:middle}
     .tbl td.l,.tbl th.l{text-align:left}
-    .summary-wrap{display:flex;gap:14px;margin-top:0.64cm;align-items:flex-start}
+    .summary-wrap{display:flex;gap:14px;margin-top:0.448cm;align-items:flex-start}
     .summary-tbl{flex:1.3;border-collapse:collapse}
-    .summary-tbl th,.summary-tbl td{border:1px solid #000;padding:calc(2px + 0.07cm) 5px;line-height:1.1;font-size:14pt;text-align:center}
+    .summary-tbl th,.summary-tbl td{border:1px solid #000;padding:calc(2px + 0.04cm) 5px;line-height:1.1;font-size:14pt;text-align:center}
     .summary-tbl th{background:#f1f5f9}
     .summary-tbl td.l{text-align:left}
     .sig-col{flex:1;display:flex;flex-direction:column;gap:2mm;text-align:center;font-size:14pt;padding-top:1mm}
