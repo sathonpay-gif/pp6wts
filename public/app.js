@@ -189,7 +189,26 @@ async function loadScoreGrid(){
   updateVisibleGrades();
   updateScoreModeUi(hasSaved);
 }
-function updateVisibleGrades(){document.querySelectorAll('#scoreGrid tbody tr').forEach(tr=>{const score=tr.querySelector('.score').value,ret=tr.querySelector('.retake').value,status=tr.querySelector('.status').value;let g='';if(!status&&score!=='')g=calcLocalGrade(Number(ret!==''?ret:score));tr.querySelector('.grade').textContent=g??'';});}
+function updateVisibleGrades(){
+  // BUGFIX: this preview used to feed the raw score straight into calcLocalGrade,
+  // which uses 0-100 percentage thresholds. That only matched what the server
+  // actually saves (see calculateGrade_ in Code.gs) when a subject's ScoreMax
+  // happened to be 100. For any subject with a different "เต็ม" (คะแนนเต็ม),
+  // the live preview grade shown while editing didn't match the grade that
+  // came back after saving. Normalize to a percentage of ScoreMax first, same
+  // as the server does.
+  const maxScore=Number(window._scoreData?.assignment?.scoreMax||100);
+  document.querySelectorAll('#scoreGrid tbody tr').forEach(tr=>{
+    const score=tr.querySelector('.score').value,ret=tr.querySelector('.retake').value,status=tr.querySelector('.status').value;
+    let g='';
+    if(!status&&score!==''){
+      const raw=Number(ret!==''?ret:score);
+      const pct=maxScore>0?raw/maxScore*100:raw;
+      g=calcLocalGrade(pct);
+    }
+    tr.querySelector('.grade').textContent=g??'';
+  });
+}
 function calcLocalGrade(n){if(n>=80)return 4;if(n>=75)return 3.5;if(n>=70)return 3;if(n>=65)return 2.5;if(n>=60)return 2;if(n>=55)return 1.5;if(n>=50)return 1;return 0;}
 async function saveScoreGrid(){
   const id=$('assignSelect').value;if(!id)return;
