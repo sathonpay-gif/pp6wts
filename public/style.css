@@ -432,6 +432,8 @@ button,.btn{font-size:24px!important;min-height:52px}
 .curriculum-table-card{min-width:0;display:flex;flex-direction:column}
 .curriculum-title{font-weight:800;font-size:15px;padding:10px 14px;background:#fff;border:1px solid var(--border);border-radius:12px;color:var(--school-navy);box-shadow:var(--shadow)}
 .curriculum-table{width:100%;table-layout:auto}
+.curriculum-extra-row{background:#fbfaf3}
+.curriculum-extra-row td{border-left:3px solid #e9c46a!important}
 .curriculum-table th,.curriculum-table td{font-size:16px!important}
 .curriculum-card .section-kicker{font-size:13px}
 .curriculum-card .section-heading h3{font-size:19px}
