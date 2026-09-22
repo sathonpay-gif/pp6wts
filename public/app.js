@@ -9,6 +9,12 @@ let CURRICULUM={};
    วิชาที่ไม่อยู่ในหลักสูตร จะถูกต่อท้าย โดยเรียง พื้นฐาน→เพิ่มเติม
    แล้วตามกลุ่มสาระ (ท ค ว ส พ ศ ง อ) และรหัสวิชา */
 const SUBJECT_GROUP_ORDER=['ท','ค','ว','ส','พ','ศ','ง','อ'];
+// ใช้จับคู่รหัสวิชาระหว่างหลักสูตร (CURRICULUM) กับ SUBJECTS จริงในฐานข้อมูล ให้เป็นกติกาเดียวกับ
+// ฝั่ง Code.gs (saveSubject ตรวจรหัสซ้ำแบบ trim + ไม่สนตัวพิมพ์เล็ก/ใหญ่) — เดิม curriculumRows()
+// เทียบรหัสแบบตรงตัวเป๊ะๆ ถ้าในชีตมีช่องว่างเกินติดมา (พบบ่อยจากการพิมพ์/คัดลอก) จะจับคู่ไม่เจอ
+// ตารางเลยขึ้น "ไม่พบในฐานข้อมูล" ทั้งที่จริงมีวิชานี้อยู่แล้ว พอกด ➕ เพื่อเพิ่มใหม่จึงชนกับของเดิม
+// เกิด error "รหัสวิชานี้มีอยู่แล้ว" ทั้งที่หน้าเว็บไม่ได้โชว์ให้แก้ไขวิชานั้นอยู่เลย
+function normCode_(v){return String(v==null?'':v).trim().toLowerCase();}
 function curriculumOrderIndex_(level,term){const map={};((CURRICULUM[String(level)]||{})[String(term)]||[]).forEach((x,i)=>{map[String(x[0]).trim()]=i;});return map;}
 function levelFromClassName_(name){const m=String(name||'').match(/ม\s*\.?\s*([1-3])/);return m?m[1]:'';}
 function subjectSortKey_(s,orderMap){
@@ -30,7 +36,7 @@ function sortSubjectsByCurriculum(subjects,className,term){
   return curriculumSubjectOrder(subjects,className,term).map(i=>subjects[i]);
 }
 function orderedClasses(rows){return [...rows].sort((a,b)=>{const ka=String(a.className||'').match(/ม\.([1-3])\/(\d+)/),kb=String(b.className||'').match(/ม\.([1-3])\/(\d+)/);if(ka&&kb)return (Number(ka[1])-Number(kb[1]))|| (Number(ka[2])-Number(kb[2]));return String(a.className||'').localeCompare(String(b.className||''),'th');});}
-function curriculumRows(level,term,subs){const byCode={};(subs||[]).forEach(s=>byCode[String(s.subjectCode)]=s);return ((CURRICULUM[level]||{})[String(term)]||[]).map(x=>({code:x[0],name:x[1],type:x[2],credit:x[3],hours:x[4],subjectId:byCode[x[0]]?.subjectId||''}));}
+function curriculumRows(level,term,subs){const byCode={};(subs||[]).forEach(s=>byCode[normCode_(s.subjectCode)]=s);return ((CURRICULUM[level]||{})[String(term)]||[]).map(x=>({code:x[0],name:x[1],type:x[2],credit:x[3],hours:x[4],subjectId:byCode[normCode_(x[0])]?.subjectId||''}));}
 function isTeachingOccupied(subjectId,classId){return (window._teachingAvailability||[]).some(x=>String(x.subjectId)===String(subjectId)&&String(x.classId)===String(classId));}
 function availableSubjectsForLevel(level,term,subs,classes){const cls=(classes||[]).filter(c=>getClassLevelKey_(c)===String(level));return curriculumRows(level,term,subs).filter(s=>s.subjectId&&cls.some(c=>!isTeachingOccupied(s.subjectId,c.classId)));}
 // ข้อความเมื่อไม่มีวิชาให้เลือก: แยกกรณี "ยังไม่มีห้องของระดับชั้นนี้ในช่วงการศึกษา" ออกจาก "วิชาถูกมอบหมายครบแล้ว"
@@ -427,7 +433,29 @@ async function saveNewSubject(){
 // ปุ่มนี้สร้างวิชานั้นเข้า SUBJECTS ทันทีโดยใช้รหัส/ชื่อ/ประเภท/หน่วยกิต/ชม. ตามหลักสูตร แล้ว
 // รีเฟรชหน้า เพื่อให้แถวนั้นมี subjectId และใช้งาน (มอบหมายผู้สอน ฯลฯ) ได้ทันที
 async function quickAddCurriculumSubject(s){
-  try{await call('saveSubject',state.token,{subjectCode:s.subjectCode,subjectName:s.subjectName,subjectType:s.subjectType,credit:s.credit,hours:s.hours});toast('เพิ่มวิชา '+s.subjectName+' เข้าระบบแล้ว',true);await renderSubjects($('page'));}catch(e){toast(e.message);}
+  try{
+    await call('saveSubject',state.token,{subjectCode:s.subjectCode,subjectName:s.subjectName,subjectType:s.subjectType,credit:s.credit,hours:s.hours});
+    toast('เพิ่มวิชา '+s.subjectName+' เข้าระบบแล้ว',true);
+    await renderSubjects($('page'));
+  }catch(e){
+    // "รหัสวิชานี้มีอยู่แล้ว" = รหัสนี้มีแถวจริงใน SUBJECTS อยู่แล้ว (เช่น เคยพิมพ์/นำเข้ามาก่อน
+    // ด้วยช่องว่าง/ตัวพิมพ์ต่างไปเล็กน้อยจนตาราง CURRICULUM จับคู่อัตโนมัติไม่เจอ) แทนที่จะปล่อยเป็น
+    // ทางตัน ให้ค้นหาวิชานั้นจริงๆ แล้วเปิดฟอร์ม "แก้ไข" ของวิชาเดิมให้เลย ถือเป็นการซิงค์เข้าด้วยกัน
+    // ครูจะเห็นค่าปัจจุบันแล้วกดบันทึกเพื่อปรับชื่อ/หน่วยกิต/ชม. ให้ตรงหลักสูตรได้ทันที
+    if(String(e.message||'').includes('มีอยู่แล้ว')){
+      try{
+        const subs=await call('getSubjects',state.token);
+        const match=subs.find(x=>String(x.subjectCode).trim().toLowerCase()===String(s.subjectCode).trim().toLowerCase());
+        if(match){
+          toast('รหัส '+s.subjectCode+' มีวิชานี้อยู่แล้วในระบบ — เปิดฟอร์มแก้ไขให้เลือกปรับ/ซิงค์ค่าตามหลักสูตรนี้',true);
+          await renderSubjects($('page'));
+          loadSubjectForEdit(match);
+          return;
+        }
+      }catch(e2){/* fall through to raw error below */}
+    }
+    toast(e.message);
+  }
 }
 async function deleteSubjectNow(subjectId){
   if(!confirm('ลบรายวิชานี้?'))return;
