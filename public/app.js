@@ -16,11 +16,31 @@ const SUBJECT_GROUP_ORDER=['ท','ค','ว','ส','พ','ศ','ง','อ'];
 // เกิด error "รหัสวิชานี้มีอยู่แล้ว" ทั้งที่หน้าเว็บไม่ได้โชว์ให้แก้ไขวิชานั้นอยู่เลย
 function normCode_(v){return String(v==null?'':v).trim().toLowerCase();}
 // เซตรหัสวิชาทั้งหมดของหลักสูตรมาตรฐาน (ทุกระดับชั้น/ทุกภาคเรียนรวมกัน) — ใช้แยกว่าวิชาไหนเป็น
-// วิชาหลักสูตรมาตรฐาน (จับคู่ระดับชั้น/ภาคเรียนได้จากรหัสเองอยู่แล้ว ไม่ต้องตั้งค่า) ออกจากวิชาที่
-// เพิ่มเอง แต่ "ยังไม่ได้ตั้งระดับชั้น/ภาคเรียน" เลย (เพิ่งเพิ่มก่อนมีช่อง หรือลืมเลือกตอนเพิ่ม)
+// วิชาหลักสูตรมาตรฐานออกจากวิชาที่เพิ่มเองในโรงเรียน
 function allCurriculumCodes_(){const set=new Set();Object.values(CURRICULUM||{}).forEach(byTerm=>Object.values(byTerm||{}).forEach(list=>(list||[]).forEach(x=>set.add(normCode_(x[0])))));return set;}
-function untaggedSubjects_(subs){const off=allCurriculumCodes_();return (subs||[]).filter(s=>!s.level && !off.has(normCode_(s.subjectCode)));}
-function curriculumOrderIndex_(level,term){const map={};((CURRICULUM[String(level)]||{})[String(term)]||[]).forEach((x,i)=>{map[String(x[0]).trim()]=i;});return map;}
+function untaggedSubjects_(subs){const off=allCurriculumCodes_();return (subs||[]).filter(s=>!s.level && !off.has(normCode_(s.subjectCode)) && !s.curriculumCode);}
+function curriculumBaseMeta_(code){
+  const wanted=normCode_(code);
+  for(const level of Object.keys(CURRICULUM||{}))for(const term of Object.keys(CURRICULUM[level]||{})){
+    const list=CURRICULUM[level][term]||[];
+    for(let i=0;i<list.length;i++)if(normCode_(list[i][0])===wanted)return {code:list[i][0],level:String(level),term:String(term),index:i,row:list[i]};
+  }
+  return null;
+}
+function curriculumOrderIndex_(level,term,subjects){
+  const map={};
+  ((CURRICULUM[String(level)]||{})[String(term)]||[]).forEach((x,i)=>{
+    map[normCode_(x[0])]=i;
+  });
+  // วิชามาตรฐานที่ถูกเปลี่ยนรหัสยังคงใช้ลำดับเดิมของหลักสูตร
+  (subjects||[]).filter(s=>s.curriculumCode).forEach(s=>{
+    const cc=curriculumBaseMeta_(s.curriculumCode);
+    if(!cc)return;
+    const lv=String(s.level||cc.level),tm=String(s.term||cc.term);
+    if(lv===String(level)&&(!s.term||tm===String(term)))map[normCode_(s.subjectCode)]=cc.index;
+  });
+  return map;
+}
 function levelFromClassName_(name){const m=String(name||'').match(/ม\s*\.?\s*([1-3])/);return m?m[1]:'';}
 function subjectSortKey_(s,orderMap){
   const code=String((s&&s.code)||'').trim();
@@ -33,7 +53,7 @@ function subjectSortKey_(s,orderMap){
 function compareSortKeys_(a,b){for(let i=0;i<a.length;i++){if(a[i]<b[i])return -1;if(a[i]>b[i])return 1;}return 0;}
 /* คืนลำดับ index ของรายวิชาหลังเรียงตามหลักสูตร (ใช้จัดเรียงคอลัมน์/เซลล์ให้ตรงกัน) */
 function curriculumSubjectOrder(subjects,className,term){
-  const orderMap=curriculumOrderIndex_(levelFromClassName_(className),term);
+  const orderMap=curriculumOrderIndex_(levelFromClassName_(className),term,subjects);
   return (subjects||[]).map((s,i)=>({i,k:subjectSortKey_(s,orderMap)}))
     .sort((a,b)=>compareSortKeys_(a.k,b.k)||(a.i-b.i)).map(x=>x.i);
 }
@@ -46,15 +66,31 @@ function orderedClasses(rows){return [...rows].sort((a,b)=>{const ka=String(a.cl
 // ที่เรียกฟังก์ชันนี้ ทำให้โผล่ในตาราง CURRICULUM ของระดับชั้น/ภาคเรียนนั้น และใช้ในลิสต์มอบหมาย
 // ผู้สอนได้ทันที (availableSubjectsForLevel/renderTeacherSubjectChecks ฯลฯ เรียกฟังก์ชันนี้อยู่แล้ว)
 function curriculumRows(level,term,subs){
-  const byCode={};(subs||[]).forEach(s=>byCode[normCode_(s.subjectCode)]=s);
-  const officialCodes=new Set();
-  const official=((CURRICULUM[level]||{})[String(term)]||[]).map(x=>{
-    officialCodes.add(normCode_(x[0]));
-    return {code:x[0],name:x[1],type:x[2],credit:x[3],hours:x[4],subjectId:byCode[normCode_(x[0])]?.subjectId||'',level:String(level),term:String(term),extra:false};
+  const byCode={};const byCurriculumCode={};
+  (subs||[]).forEach(s=>{
+    byCode[normCode_(s.subjectCode)]=s;
+    if(s.curriculumCode)byCurriculumCode[normCode_(s.curriculumCode)]=s;
   });
-  const extra=(subs||[]).filter(s=>String(s.level||'')===String(level) && (!s.term||String(s.term)===String(term)) && !officialCodes.has(normCode_(s.subjectCode)))
-    .map(s=>({code:s.subjectCode,name:s.subjectName,type:s.subjectType,credit:s.credit,hours:s.hours,subjectId:s.subjectId,level:String(level),term:String(term),extra:true}));
-  return official.concat(extra);
+  const baseCodes=new Set();
+  const official=[];
+  ((CURRICULUM[level]||{})[String(term)]||[]).forEach(x=>{
+    const canonical=normCode_(x[0]);baseCodes.add(canonical);
+    const db=byCurriculumCode[canonical]||byCode[canonical];
+    // ถ้ามีการแก้รายวิชามาตรฐานและย้ายไปอีกชั้น/เทอม ไม่ให้แถวเดิมซ้ำในตำแหน่งเก่า
+    if(db && db.curriculumCode && String(db.level||level)!==String(level))return;
+    if(db && db.curriculumCode && db.term && String(db.term)!==String(term))return;
+    official.push({
+      code:db?.subjectCode||x[0],name:db?.subjectName||x[1],type:db?.subjectType||x[2],
+      credit:db?.credit??x[3],hours:db?.hours??x[4],subjectId:db?.subjectId||'',
+      level:String(db?.level||level),term:String(db?.term||term),curriculumCode:db?.curriculumCode||x[0],extra:false
+    });
+  });
+  // วิชามาตรฐานที่ถูกย้ายมาจากคนละชั้น/ภาคเรียน ให้แสดง ณ ตำแหน่งใหม่
+  const movedStandard=(subs||[]).filter(s=>s.curriculumCode&&String(s.level||'')===String(level)&&(!s.term||String(s.term)===String(term))&&curriculumBaseMeta_(s.curriculumCode)&&!baseCodes.has(normCode_(s.curriculumCode)))
+    .map(s=>({code:s.subjectCode,name:s.subjectName,type:s.subjectType,credit:s.credit,hours:s.hours,subjectId:s.subjectId,level:String(level),term:String(s.term||term),curriculumCode:s.curriculumCode,extra:false}));
+  const extra=(subs||[]).filter(s=>!s.curriculumCode&&String(s.level||'')===String(level)&&(!s.term||String(s.term)===String(term))&&!baseCodes.has(normCode_(s.subjectCode)))
+    .map(s=>({code:s.subjectCode,name:s.subjectName,type:s.subjectType,credit:s.credit,hours:s.hours,subjectId:s.subjectId,level:String(level),term:String(term),curriculumCode:'',extra:true}));
+  return official.concat(movedStandard,extra);
 }
 function isTeachingOccupied(subjectId,classId){return (window._teachingAvailability||[]).some(x=>String(x.subjectId)===String(subjectId)&&String(x.classId)===String(classId));}
 function availableSubjectsForLevel(level,term,subs,classes){const cls=(classes||[]).filter(c=>getClassLevelKey_(c)===String(level));return curriculumRows(level,term,subs).filter(s=>s.subjectId&&cls.some(c=>!isTeachingOccupied(s.subjectId,c.classId)));}
@@ -393,7 +429,7 @@ async function renderSubjects(p){
   const subjectOptions=availableSubjectsForLevel(state._assignLevel||'1',state.period.term,subs,classes).map(s=>`<option value="${s.subjectId}">${escapeHtml(s.code+' '+s.name)}</option>`).join('');
   p.innerHTML=`<h2>ตั้งค่าวิชาเรียน / มอบหมายผู้สอน</h2>
   <div class="period-banner">📅 ปีการศึกษา <b>${escapeHtml(state.period.year)}</b> · ภาคเรียน <b>${escapeHtml(state.period.term)}</b></div>
-  <div class="card"><h3 id="subjectFormTitle">เพิ่มรายวิชา</h3><input type="hidden" id="subId"><div class="grid grid-2"><div class="field"><label>รหัสวิชา</label><input id="subCode"></div><div class="field"><label>ชื่อวิชา</label><input id="subName"></div><div class="field"><label>ประเภท</label><select id="subType"><option>พื้นฐาน</option><option>เพิ่มเติม</option></select></div><div class="field"><label>หน่วยกิต</label><input id="subCredit" type="number" step="0.5"></div><div class="field"><label>เวลาเรียน</label><input id="subHours" type="number"></div><div class="field"><label>ระดับชั้น (เฉพาะวิชาที่เพิ่มเองนอกหลักสูตร)</label><select id="subLevel"><option value="">- ใช้รหัสหลักสูตรมาตรฐานอยู่แล้ว -</option><option value="1">ม.1</option><option value="2">ม.2</option><option value="3">ม.3</option></select></div><div class="field"><label>ภาคเรียน</label><select id="subTerm"><option value="">ทั้ง 2 ภาคเรียน</option><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option></select></div></div><p class="section-note">ถ้ารหัสวิชาตรงกับหลักสูตรมาตรฐาน (CURRICULUM) อยู่แล้ว ไม่ต้องเลือกระดับชั้น/ภาคเรียน ระบบจะจับคู่ให้เองจากรหัส — เลือกเฉพาะตอนเพิ่มวิชานอกหลักสูตร (เช่น วิชาเพิ่มเติมที่โรงเรียนกำหนดเอง) เพื่อให้ไปโผล่ในตาราง CURRICULUM และเลือกมอบหมายครูผู้สอนได้</p><div class="toolbar"><button class="btn btn-primary" onclick="saveNewSubject()">บันทึกวิชา</button><button class="btn btn-secondary" id="subCancelBtn" onclick="resetSubjectForm()" style="display:none">ยกเลิกแก้ไข</button></div></div>
+  <div class="card"><h3 id="subjectFormTitle">เพิ่มรายวิชา</h3><p class="muted" style="margin-top:-4px">รายวิชาในหลักสูตรก็สามารถแก้ไขได้: รหัสวิชา ชื่อวิชา ประเภท หน่วยกิต เวลาเรียน ระดับชั้น และภาคเรียน โดยระบบจะคงความเชื่อมโยงกับหลักสูตรเดิมไว้</p><input type="hidden" id="subId"><input type="hidden" id="subCurriculumCode"><div class="grid grid-2"><div class="field"><label>รหัสวิชา</label><input id="subCode"></div><div class="field"><label>ชื่อวิชา</label><input id="subName"></div><div class="field"><label>ประเภท</label><select id="subType"><option>พื้นฐาน</option><option>เพิ่มเติม</option></select></div><div class="field"><label>หน่วยกิต</label><input id="subCredit" type="number" step="0.5"></div><div class="field"><label>เวลาเรียน</label><input id="subHours" type="number"></div><div class="field"><label>ระดับชั้น</label><select id="subLevel"><option value="">- ใช้รหัสหลักสูตรมาตรฐานอยู่แล้ว -</option><option value="1">ม.1</option><option value="2">ม.2</option><option value="3">ม.3</option></select></div><div class="field"><label>ภาคเรียน</label><select id="subTerm"><option value="">ทั้ง 2 ภาคเรียน</option><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option></select></div></div><p class="section-note">รายวิชามาตรฐานที่กดแก้ไขจะยังเชื่อมกับหลักสูตรเดิม แม้เปลี่ยนรหัสหรือชื่อ และสามารถย้ายภาคเรียนได้; ส่วนวิชาที่เพิ่มเอง ให้ระบุระดับชั้นและภาคเรียนเพื่อให้แสดงในตารางหลักสูตรและใช้มอบหมายผู้สอนได้</p><div class="toolbar"><button class="btn btn-primary" onclick="saveNewSubject()">บันทึกวิชา</button><button class="btn btn-secondary" id="subCancelBtn" onclick="resetSubjectForm()" style="display:none">ยกเลิกแก้ไข</button></div></div>
   <div class="card curriculum-card"><div class="section-heading curriculum-toggle" onclick="toggleCurriculumCard(this)"><div><span class="section-kicker">CURRICULUM</span><h3>รายวิชา ภาคเรียนที่ 1</h3></div><span class="soft-badge">ม.1 · ม.2 · ม.3</span><span class="curriculum-chevron">▾</span></div><div class="curriculum-grid">${term1}</div></div>
   <div class="card curriculum-card"><div class="section-heading curriculum-toggle" onclick="toggleCurriculumCard(this)"><div><span class="section-kicker">CURRICULUM</span><h3>รายวิชา ภาคเรียนที่ 2</h3></div><span class="soft-badge">ม.1 · ม.2 · ม.3</span><span class="curriculum-chevron">▾</span></div><div class="curriculum-grid">${term2}</div></div>
   ${untaggedCard}
@@ -408,7 +444,7 @@ async function renderSubjects(p){
   state._assignLevel='1';
 }
 function toggleCurriculumCard(headerEl){const card=headerEl.closest('.curriculum-card');if(card)card.classList.toggle('collapsed');}
-function renderCurriculumTable(level,term,subs){const rows=curriculumRows(level,term,subs);return `<div class="curriculum-table-card"><div class="curriculum-title">ม.${level}</div><div class="table-wrap"><table class="data-table curriculum-table"><thead><tr><th>รหัส</th><th>รายวิชา</th><th>ประเภท</th><th>นก.</th><th>ชม.</th><th>จัดการ</th></tr></thead><tbody>${rows.map(r=>`<tr${r.extra?' class="curriculum-extra-row"':''}><td>${escapeHtml(r.code)}</td><td class="l">${escapeHtml(r.name)}${r.extra?' <span class="soft-badge" title="วิชาที่เพิ่มเองนอกหลักสูตรมาตรฐาน">ใหม่</span>':''}</td><td>${escapeHtml(r.type)}</td><td>${r.credit}</td><td>${r.hours}</td><td class="row-actions">${r.subjectId?`<button class="btn-icon" title="แก้ไข" onclick='loadSubjectForEdit(${JSON.stringify({subjectId:r.subjectId,subjectCode:r.code,subjectName:r.name,subjectType:r.type,credit:r.credit,hours:r.hours,level:r.level,term:r.term}).replace(/'/g,"&#39;")})'>✏️</button><button class="btn-icon" title="ลบ" onclick="deleteSubjectNow('${r.subjectId}')">🗑️</button>`:`<button class="btn-icon" title="ยังไม่มีวิชานี้ในฐานข้อมูล — กดเพื่อเพิ่มตามรหัส/ชื่อ/หน่วยกิต/ชม. ของหลักสูตรนี้" onclick='quickAddCurriculumSubject(${JSON.stringify({subjectCode:r.code,subjectName:r.name,subjectType:r.type,credit:r.credit,hours:r.hours}).replace(/'/g,"&#39;")})'>➕</button>`}</td></tr>`).join('')}</tbody></table></div></div>`;}
+function renderCurriculumTable(level,term,subs){const rows=curriculumRows(level,term,subs);return `<div class="curriculum-table-card"><div class="curriculum-title">ม.${level}</div><div class="table-wrap"><table class="data-table curriculum-table"><thead><tr><th>รหัส</th><th>รายวิชา</th><th>ประเภท</th><th>นก.</th><th>ชม.</th><th>จัดการ</th></tr></thead><tbody>${rows.map(r=>`<tr${r.extra?' class="curriculum-extra-row"':''}><td>${escapeHtml(r.code)}</td><td class="l">${escapeHtml(r.name)}${r.extra?' <span class="soft-badge" title="วิชาที่เพิ่มเองนอกหลักสูตรมาตรฐาน">ใหม่</span>':''}</td><td>${escapeHtml(r.type)}</td><td>${r.credit}</td><td>${r.hours}</td><td class="row-actions">${r.subjectId?`<button class="btn-icon" title="แก้ไข" onclick='loadSubjectForEdit(${JSON.stringify({subjectId:r.subjectId,subjectCode:r.code,subjectName:r.name,subjectType:r.type,credit:r.credit,hours:r.hours,level:r.level,term:r.term,curriculumCode:r.curriculumCode||''}).replace(/'/g,"&#39;")})'>✏️</button><button class="btn-icon" title="ลบ" onclick="deleteSubjectNow('${r.subjectId}')">🗑️</button>`:`<button class="btn-icon" title="ยังไม่มีวิชานี้ในฐานข้อมูล — กดเพื่อเพิ่มตามหลักสูตรนี้" onclick='quickAddCurriculumSubject(${JSON.stringify({subjectCode:r.code,subjectName:r.name,subjectType:r.type,credit:r.credit,hours:r.hours,level:r.level,term:r.term,curriculumCode:r.curriculumCode||r.code}).replace(/'/g,"&#39;")})'>➕</button>`}</td></tr>`).join('')}</tbody></table></div></div>`;}
 function renderTeacherSubjectChecks(level,term,subs){const classes=window._adminData?.classes||[];return availableSubjectsForLevel(level,term,subs,classes).map(s=>`<label class="check-item"><input type="checkbox" class="bt-subject" value="${s.subjectId}"> ${escapeHtml(s.code+' '+s.name)}</label>`).join('')||`<span class="muted">${noSubjectHint_(level,classes)||'ไม่พบวิชาที่ว่างในระดับชั้นนี้'}</span>`;}
 function updateQuickSubjectList(){const level=$('baLevel').value;state._assignLevel=level;const subs=window._adminData.subs||[];const classes=window._adminData.classes||[];$('baSubject').innerHTML=availableSubjectsForLevel(level,state.period.term,subs,classes).map(s=>`<option value="${s.subjectId}">${escapeHtml(s.code+' '+s.name)}</option>`).join('')||'<option value="">ไม่มีวิชาที่ว่าง</option>';updateTeacherQuickLists();}
 function getClassLevelKey_(c){
@@ -442,13 +478,13 @@ async function saveAssignmentEdit(assignmentId,classId,subjectId){
   try{await call('assignTeacher',state.token,{assignmentId,classId,subjectId,teacherUserId:$('eaTeacher').value,scoreMax:$('eaScoreMax').value,academicYear:state.period.year,term:state.period.term});closeModal('editAssignModal');toast('บันทึกแล้ว',true);await renderSubjects($('page'));}catch(e){toast(e.message);}
 }
 function loadSubjectForEdit(s){
-  $('subId').value=s.subjectId;$('subCode').value=s.subjectCode;$('subName').value=s.subjectName;$('subType').value=s.subjectType;$('subCredit').value=s.credit;$('subHours').value=s.hours;$('subLevel').value=s.level||'';$('subTerm').value=s.term||'';
+  $('subId').value=s.subjectId;$('subCurriculumCode').value=s.curriculumCode||'';$('subCode').value=s.subjectCode;$('subName').value=s.subjectName;$('subType').value=s.subjectType;$('subCredit').value=s.credit;$('subHours').value=s.hours;$('subLevel').value=s.level||'';$('subTerm').value=s.term||'';
   $('subjectFormTitle').textContent='แก้ไขรายวิชา: '+s.subjectName;$('subCancelBtn').style.display='';
   window.scrollTo({top:0,behavior:'smooth'});
 }
-function resetSubjectForm(){['subId','subCode','subName','subCredit','subHours'].forEach(id=>$(id).value='');$('subType').value='พื้นฐาน';$('subLevel').value='';$('subTerm').value='';$('subjectFormTitle').textContent='เพิ่มรายวิชา';$('subCancelBtn').style.display='none';}
+function resetSubjectForm(){['subId','subCurriculumCode','subCode','subName','subCredit','subHours'].forEach(id=>$(id).value='');$('subType').value='พื้นฐาน';$('subLevel').value='';$('subTerm').value='';$('subjectFormTitle').textContent='เพิ่มรายวิชา';$('subCancelBtn').style.display='none';}
 async function saveNewSubject(){
-  try{await call('saveSubject',state.token,{subjectId:$('subId').value||undefined,subjectCode:$('subCode').value,subjectName:$('subName').value,subjectType:$('subType').value,credit:$('subCredit').value,hours:$('subHours').value,level:$('subLevel').value,term:$('subTerm').value});toast('บันทึกวิชาแล้ว',true);await renderSubjects($('page'));}catch(e){toast(e.message);}
+  try{await call('saveSubject',state.token,{subjectId:$('subId').value||undefined,subjectCode:$('subCode').value,subjectName:$('subName').value,subjectType:$('subType').value,credit:$('subCredit').value,hours:$('subHours').value,level:$('subLevel').value,term:$('subTerm').value,curriculumCode:$('subCurriculumCode')?.value||undefined});toast('บันทึกวิชาแล้ว',true);await renderSubjects($('page'));}catch(e){toast(e.message);}
 }
 // วิชาในตาราง CURRICULUM ที่ขึ้น "ไม่พบในฐานข้อมูล" คือวิชาที่มีอยู่ในหลักสูตร (CURRICULUM_ ฝั่ง
 // Code.gs) แต่ยังไม่เคยถูกสร้างเป็นแถวจริงในชีต SUBJECTS จึงไม่มี subjectId ให้กดแก้ไข/ลบได้ —
@@ -456,7 +492,7 @@ async function saveNewSubject(){
 // รีเฟรชหน้า เพื่อให้แถวนั้นมี subjectId และใช้งาน (มอบหมายผู้สอน ฯลฯ) ได้ทันที
 async function quickAddCurriculumSubject(s){
   try{
-    await call('saveSubject',state.token,{subjectCode:s.subjectCode,subjectName:s.subjectName,subjectType:s.subjectType,credit:s.credit,hours:s.hours});
+    await call('saveSubject',state.token,{subjectCode:s.subjectCode,subjectName:s.subjectName,subjectType:s.subjectType,credit:s.credit,hours:s.hours,level:s.level||'',term:s.term||'',curriculumCode:s.curriculumCode||undefined});
     toast('เพิ่มวิชา '+s.subjectName+' เข้าระบบแล้ว',true);
     await renderSubjects($('page'));
   }catch(e){
