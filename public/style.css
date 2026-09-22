@@ -186,9 +186,9 @@ body{font-family:'TH Sarabun New','TH Sarabun','Sarabun','Noto Sans Thai',Tahoma
 @media print{
   .topbar,.sidebar,.toolbar,.menu-toggle,.toast-host{display:none!important}
 }
-</style>
 
-<style>
+
+
 /* ===== Accessibility / Large readable UI ===== */
 :root{--base-font:24px}
 html{font-size:24px}
@@ -220,13 +220,13 @@ button,.btn{font-size:24px!important;min-height:52px}
   .brand strong{font-size:21px!important}.sidebar-school b{font-size:24px!important}
   .period-picker{max-width:46vw}.period-controls{display:flex;gap:6px}.period-controls select{min-width:0;width:110px}
 }
-</style>
-<style>
+
+
 /* ===== Extra Large Detail Text ===== */
 .detail-text,.description,.detail-description,.empty-state,.help-text,.form-note,.field-help,.table-note,.record-meta,.student-meta,.subject-meta,.status-text,.summary-text{font-size:28px!important;line-height:1}
 .detail-text small,.description small,.detail-description small,.record-meta small,.student-meta small,.subject-meta small{font-size:25px!important;line-height:1}
-</style>
-<style>
+
+
 /* ===== Compact Topbar: reduce height while keeping controls readable ===== */
 .topbar{
   min-height:42px!important;
@@ -267,10 +267,10 @@ button,.btn{font-size:24px!important;min-height:52px}
   .period-controls select{font-size:12px!important;height:28px!important;min-height:28px!important;width:78px!important}
   .top-logout{display:none!important}
 }
-</style>
 
 
-<style>
+
+
 /* ===== Table compact + larger progress text + balanced topbar ===== */
 .data-table th,.data-table td{font-size:27px!important;padding:4px 8px!important;line-height:1!important}
 .data-table tbody tr{height:auto!important}
@@ -333,7 +333,7 @@ button,.btn{font-size:24px!important;min-height:52px}
 #tabBySubject .grid,#tabByTeacher .grid{gap:8px!important}
 #tabBySubject .field,#tabByTeacher .field{margin-bottom:6px!important}
 #tabBySubject p.muted,#tabByTeacher p.muted{margin:4px 0 7px!important;line-height:1.2!important}
-</style><style>
+
 /* ===== Content text set to 19px ===== */
 .content,
 .content p,
@@ -417,9 +417,9 @@ button,.btn{font-size:24px!important;min-height:52px}
 .content .check-list{gap:1px!important;padding:3px!important}
 .content .check-item{min-height:26px!important;padding:1px 5px!important;gap:5px!important}
 .content .check-item input[type="checkbox"]{width:18px!important;height:18px!important;min-height:18px!important}
-</style>
 
-<style>
+
+
 /* ===== Curriculum / Assignment Professional UI ===== */
 /* เรียง 3 ตาราง (ม.1 · ม.2 · ม.3) แนวนอนต่อภาคเรียน ด้วยขนาดตัวอักษร/ระยะห่าง
    แบบเดียวกับตารางมาตรฐาน (.data-table) ของระบบ เพื่อให้อ่านง่ายและดูเป็นมืออาชีพ */
@@ -445,17 +445,17 @@ button,.btn{font-size:24px!important;min-height:52px}
 .student-data-table th,.student-data-table td{padding:3px 6px!important;line-height:1!important;vertical-align:middle}
 .student-data-table .btn-icon{width:32px!important;height:32px!important;font-size:18px!important}
 .student-data-table input[type=checkbox]{width:20px;height:20px}
-</style>
 
-<style>
+
+
 /* Link from class/homeroom settings to student registration */
 .class-student-link{cursor:pointer!important;white-space:nowrap;min-height:34px!important;padding:4px 9px!important;font-size:16px!important;line-height:1!important}
 .class-student-link:hover{transform:translateY(-1px)}
 .btn-icon,.btn,.tab-btn,.menu-btn,.check-item,label{cursor:pointer}
 @media (max-width:860px){.class-student-link{font-size:15px!important;padding:3px 7px!important;min-height:32px!important}}
-</style>
 
-<style>
+
+
 /* ===== Teacher self-registration quick assignment ===== */
 .teacher-self-tabs{margin-top:4px;margin-bottom:8px}
 .teacher-self-tabs .tab-btn{width:100%;justify-content:center;cursor:default;box-shadow:0 4px 12px rgba(37,99,235,.10)}
@@ -480,3 +480,498 @@ button,.btn{font-size:24px!important;min-height:52px}
   .teacher-check-columns .check-list{max-height:240px}
 }
 
+
+/* =====================================================================
+   PP6 UI REDESIGN — Green / Yellow / Nature / Pastel
+   UI ONLY: no data, API, validation or business rules changed.
+   ===================================================================== */
+:root{
+  --pp6-bg:#f6fbf7;
+  --pp6-bg-warm:#fffdf4;
+  --pp6-surface:#ffffff;
+  --pp6-surface-soft:#f9fcf8;
+  --pp6-ink:#1f3528;
+  --pp6-muted:#6f8175;
+  --pp6-line:#dfece2;
+  --pp6-green:#4f9b6c;
+  --pp6-green-strong:#347b50;
+  --pp6-green-dark:#245f3c;
+  --pp6-mint:#dff2e5;
+  --pp6-mint-2:#edf8f0;
+  --pp6-yellow:#f3d46b;
+  --pp6-yellow-soft:#fff7d9;
+  --pp6-lime:#c8df78;
+  --pp6-danger:#c95d63;
+  --pp6-danger-soft:#fff0f1;
+  --pp6-shadow:0 10px 30px rgba(50,92,65,.07),0 2px 8px rgba(50,92,65,.045);
+  --pp6-shadow-lg:0 18px 45px rgba(50,92,65,.10),0 4px 12px rgba(50,92,65,.05);
+  --pp6-radius:18px;
+  --pp6-gradient:linear-gradient(135deg,#68b987 0%,#9dce7c 58%,#f1d469 100%);
+}
+
+html{scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(circle at 0% 0%,rgba(221,243,229,.72),transparent 30%),
+    radial-gradient(circle at 100% 100%,rgba(255,247,217,.78),transparent 28%),
+    linear-gradient(135deg,var(--pp6-bg),var(--pp6-bg-warm));
+  color:var(--pp6-ink);
+  font-family:'TH Sarabun New','TH Sarabun','thsarabun','Sarabun','Noto Sans Thai',Tahoma,sans-serif;
+  font-size:18px;
+  line-height:1.45;
+}
+button,input,select,textarea{font-family:inherit}
+button{border:0}
+
+/* Login */
+.login-wrap{
+  min-height:100vh;
+  padding:22px;
+  background:
+    radial-gradient(circle at 15% 10%,rgba(143,205,163,.34),transparent 28%),
+    radial-gradient(circle at 90% 80%,rgba(243,212,107,.30),transparent 26%),
+    linear-gradient(135deg,#f5fcf7,#fffdf4);
+}
+.login-card{
+  width:min(430px,100%);
+  padding:34px 30px 30px;
+  border:1px solid rgba(255,255,255,.9);
+  border-radius:28px;
+  background:rgba(255,255,255,.90);
+  box-shadow:var(--pp6-shadow-lg);
+  backdrop-filter:blur(16px);
+}
+.login-school-logo{width:100px;height:100px;margin:0 auto 10px}
+.login-kicker{font-size:14px;letter-spacing:.10em;color:var(--pp6-green);font-weight:800}
+.login-card h1{margin:5px 0 1px;font-size:38px;line-height:1;color:var(--pp6-green-dark)}
+.login-card p{margin:6px 0 23px;color:var(--pp6-muted);font-size:20px}
+.login-card .field{text-align:left;margin-bottom:14px}
+.login-card .field label{font-size:18px;color:var(--pp6-ink);margin-bottom:6px}
+.login-card .field input{min-height:48px;font-size:18px}
+.login-card .btn-primary{width:100%;min-height:50px;font-size:20px}
+
+/* App shell */
+.topbar{
+  position:sticky;top:0;z-index:80;
+  min-height:70px;
+  padding:9px 18px;
+  background:rgba(255,255,255,.92);
+  border-bottom:1px solid rgba(215,232,219,.95);
+  box-shadow:0 8px 25px rgba(58,103,71,.055);
+  backdrop-filter:blur(18px);
+}
+.brand-wrap{gap:11px;min-width:0}
+.brand-logo.brand-logo-large{
+  width:46px;height:46px;border-radius:14px;
+  background:linear-gradient(145deg,#ffffff,#f0f8f2);
+  border:1px solid var(--pp6-line);
+  box-shadow:0 6px 16px rgba(55,103,70,.08);
+}
+.brand-logo img{width:38px;height:38px}
+.brand strong{font-size:24px;color:var(--pp6-green-dark);line-height:1}
+.brand small{font-size:16px;color:var(--pp6-muted);margin-top:3px}
+.topbar-right{gap:7px;min-width:0}
+
+/* Current academic-period selector remains dynamic; only the duplicate static menu banner is suppressed. */
+.period-picker{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  padding:5px 8px;
+  border:1px solid var(--pp6-line);
+  border-radius:14px;
+  background:linear-gradient(135deg,#fbfff9,#fffdf6);
+  box-shadow:0 4px 12px rgba(56,96,67,.04);
+}
+.period-picker .period-icon{font-size:20px!important}
+.period-picker label{font-size:14px!important;color:var(--pp6-muted)!important;font-weight:700!important}
+.period-controls{gap:5px!important}
+.period-controls select{
+  width:auto!important;min-width:91px!important;
+  height:36px!important;min-height:36px!important;
+  padding:2px 9px!important;
+  border:1px solid #cfe3d3!important;
+  border-radius:10px!important;
+  background:#fff!important;
+  color:var(--pp6-green-dark)!important;
+  font-size:17px!important;
+  font-weight:700!important;
+}
+.period-controls select:focus{border-color:var(--pp6-green)!important;box-shadow:0 0 0 4px rgba(79,155,108,.12)!important}
+.sidebar-period{display:none!important}
+
+.system-status{
+  padding:7px 11px;
+  border:1px solid #d6eadb;
+  background:#eff9f1;
+  color:var(--pp6-green-dark);
+  border-radius:999px;
+  font-size:15px;
+}
+.status-dot{background:#56ae75;box-shadow:0 0 0 4px rgba(86,174,117,.12)}
+.user-pill{
+  max-width:260px;
+  padding:5px 10px 5px 6px;
+  border-radius:14px;
+  border-color:var(--pp6-line);
+  background:#fbfefb;
+}
+.user-avatar{background:var(--pp6-gradient);color:#245137;width:35px;height:35px;font-size:16px}
+.user-name{font-size:17px;color:var(--pp6-ink)}
+.user-role{font-size:13px;color:var(--pp6-muted)}
+.menu-toggle{
+  display:none;
+  width:42px;height:42px;padding:0;
+  align-items:center;justify-content:center;
+  border:1px solid var(--pp6-line);
+  background:#fff;
+  color:var(--pp6-green-dark);
+  border-radius:13px;
+  box-shadow:0 5px 14px rgba(55,103,70,.06);
+}
+
+.layout{min-height:calc(100vh - 70px)}
+.sidebar{
+  width:278px;
+  padding:12px 11px 16px;
+  background:linear-gradient(180deg,#fbfffc 0%,#f4faf5 100%);
+  border-right:1px solid var(--pp6-line);
+  box-shadow:inset -10px 0 20px rgba(79,155,108,.025);
+}
+.sidebar-school{
+  padding:10px 9px 13px;
+  margin-bottom:5px;
+  border-bottom:1px solid #e2efe4;
+  gap:10px;
+}
+.sidebar-school img{width:43px;height:43px}
+.sidebar-school b{font-size:20px;color:var(--pp6-green-dark);line-height:1.08}
+.sidebar-school small{font-size:15px;color:var(--pp6-muted)}
+.sidebar-section{
+  padding:10px 11px 5px;
+  color:#84968a;
+  font-size:15px!important;
+  letter-spacing:.06em;
+}
+.admin-title{margin-top:4px}
+.menu-btn{
+  min-height:46px;
+  padding:6px 9px;
+  gap:10px;
+  border-radius:13px;
+  color:#4e6557;
+  font-size:18px!important;
+  font-weight:700;
+}
+.menu-btn .menu-icon{
+  width:34px;height:34px;
+  border-radius:11px;
+  background:#edf6ef;
+  color:var(--pp6-green-strong);
+  font-size:18px;
+  transition:transform .18s ease,background .18s ease;
+}
+.menu-btn:hover{background:#edf8ef;color:var(--pp6-green-dark);transform:translateX(2px)}
+.menu-btn:hover .menu-icon{transform:scale(1.04)}
+.menu-btn.active{
+  background:linear-gradient(90deg,#e5f5e9 0%,#f5fbeb 100%);
+  color:var(--pp6-green-dark);
+  box-shadow:inset 4px 0 0 var(--pp6-green),0 5px 14px rgba(79,155,108,.06);
+}
+.menu-btn.active .menu-icon{background:var(--pp6-gradient);color:#245137}
+.sidebar-footer{font-size:14px;color:#94a59a;padding:11px 11px 0}
+
+.content{
+  max-width:1700px;
+  padding:24px 28px 60px;
+}
+.content h2{
+  margin:0 0 12px;
+  color:var(--pp6-green-dark);
+  font-size:34px!important;
+  line-height:1.08!important;
+}
+.content h3{font-size:24px!important;line-height:1.12!important;color:var(--pp6-green-dark)}
+.content h4{font-size:21px!important;line-height:1.16!important;color:var(--pp6-green-dark)}
+.content p,.content li{line-height:1.45!important}
+.muted{color:var(--pp6-muted)!important}
+
+/* Cards / panels */
+.card,.hero-card,.progress-box,.kpi-card{
+  border:1px solid var(--pp6-line)!important;
+  box-shadow:var(--pp6-shadow)!important;
+}
+.card{
+  padding:18px 19px;
+  border-radius:var(--pp6-radius);
+  background:rgba(255,255,255,.93);
+}
+.card:hover{border-color:#d5e8d9!important}
+.section-heading{gap:10px}
+.section-kicker,.eyebrow,.login-kicker{color:var(--pp6-green-strong)!important;font-size:14px!important}
+.section-heading h3{font-size:24px!important;color:var(--pp6-green-dark)}
+.soft-badge{
+  padding:5px 11px;
+  border:1px solid #d6eadb;
+  background:#ecf8ef;
+  color:var(--pp6-green-dark);
+  font-size:15px!important;
+}
+.soft-blue{background:#eef8f2!important;color:var(--pp6-green-dark)!important;border-color:#d7eadd!important}
+.soft-green{background:#edf8ef!important;color:var(--pp6-green-dark)!important}
+
+/* Dashboard */
+.dashboard-head{margin-bottom:14px}
+.dashboard-head h2{font-size:34px!important}
+.meta-chip{background:#fffdf5;border-color:#eee2b7;color:#617263;font-size:16px!important}
+.welcome-banner{
+  min-height:260px;
+  padding:27px 31px;
+  margin-bottom:16px;
+  border-radius:25px;
+  border:1px solid #deeadf;
+  background:
+    radial-gradient(circle at 92% 8%,rgba(243,212,107,.30),transparent 24%),
+    radial-gradient(circle at 68% 90%,rgba(79,155,108,.15),transparent 29%),
+    linear-gradient(135deg,#eef9f1 0%,#fffdf3 60%,#f4fae8 100%);
+  box-shadow:var(--pp6-shadow-lg);
+}
+.welcome-banner:before{background:rgba(79,155,108,.08)}
+.welcome-banner:after{background:rgba(243,212,107,.14)}
+.welcome-brand{font-size:16px;color:#69806e}
+.welcome-dot{color:#d2ad35}
+.welcome-copy h1{font-size:36px;color:var(--pp6-green-dark);margin:10px 0 8px}
+.welcome-copy h1 span{color:var(--pp6-green)}
+.welcome-copy p{font-size:20px;color:#6d806f;line-height:1.52}
+.emblem-ring{border-color:rgba(255,255,255,.9);background:rgba(255,255,255,.78)}
+.emblem-caption{color:var(--pp6-green-dark)}
+
+.dashboard-grid,.dashboard-bottom{gap:16px}
+.kpi-card{border-radius:18px!important}
+.kpi-card::after{background:rgba(79,155,108,.06)}
+.kpi{font-size:34px!important;color:var(--pp6-green-dark)!important}
+.kpi-icon{font-size:20px}
+.kpi-card.tone-blue .kpi-icon{background:#eaf7ee;color:var(--pp6-green-strong)}
+.kpi-card.tone-green .kpi-icon{background:#eaf7ee;color:#4f9b6c}
+.kpi-card.tone-gold .kpi-icon{background:#fff8de;color:#b69123}
+.kpi-card.tone-red .kpi-icon{background:#fff0f1;color:var(--pp6-danger)}
+.progress-main{gap:24px}
+.progress-value{font-size:22px;color:var(--pp6-green-dark)}
+.progress{background:#e8f0ea!important}
+.progress-bar{background:var(--pp6-gradient)!important}
+.legend-row{font-size:16px!important;color:#738479!important}
+.bar-track{background:#edf3ee}
+.bar-fill.tone-blue{background:linear-gradient(90deg,#76bd91,#4f9b6c)}
+.bar-fill.tone-green{background:linear-gradient(90deg,#91ca78,#5a9e66)}
+.bar-fill.tone-gold{background:linear-gradient(90deg,#efd574,#d3ad39)}
+.bar-fill.tone-red{background:linear-gradient(90deg,#eaa0a4,#c95d63)}
+.modern-quick{margin-top:13px;gap:10px}
+.modern-quick .quick-btn,.quick-btn{
+  border-color:var(--pp6-line)!important;
+  background:linear-gradient(135deg,#fff,#fbfefb)!important;
+  border-radius:15px!important;
+  box-shadow:0 5px 14px rgba(52,123,80,.035);
+}
+.modern-quick .quick-btn:hover,.quick-btn:hover{
+  border-color:#c8e1cd!important;
+  background:linear-gradient(135deg,#f7fcf8,#fffdf3)!important;
+  box-shadow:0 10px 22px rgba(52,123,80,.075)!important;
+}
+.modern-quick .quick-btn b{font-size:19px!important;color:var(--pp6-green-dark)!important}
+.modern-quick .quick-btn small{font-size:16px!important;color:#829187!important}
+.modern-quick .q-icon{background:#edf7ef!important;color:var(--pp6-green-strong)!important}
+.modern-quick .quick-btn em{color:#85a48d}
+.class-chips span{background:#f2f8f3;border-color:#dfece2;color:#5e7565;font-size:16px}
+
+/* Forms */
+.field label{font-size:17px!important;color:#516458!important;margin-bottom:5px!important}
+.field input,.field select,input,select,textarea{
+  min-height:44px;
+  padding:8px 11px;
+  border-color:#d4e4d8!important;
+  border-radius:11px!important;
+  color:var(--pp6-ink)!important;
+  background:#fff!important;
+  font-size:18px!important;
+}
+.field input:hover,.field select:hover,input:hover,select:hover,textarea:hover{border-color:#bfd9c5!important}
+.field input:focus,.field select:focus,input:focus,select:focus,textarea:focus{
+  border-color:var(--pp6-green)!important;
+  box-shadow:0 0 0 4px rgba(79,155,108,.12)!important;
+}
+.toolbar{gap:8px;margin-top:13px}
+.toolbar select{min-width:210px}
+.check-list{border-color:#d8e8dc!important;background:#fbfefb!important}
+.check-item{font-size:18px!important;border-color:transparent!important}
+.check-item:hover{background:#eef8ef!important;border-color:#d5e8da!important}
+
+/* Buttons */
+.btn{
+  min-height:42px;
+  padding:7px 15px;
+  border-radius:12px;
+  font-size:18px!important;
+  font-weight:800;
+}
+.btn-primary{
+  color:#234d33!important;
+  background:var(--pp6-gradient)!important;
+  box-shadow:0 8px 18px rgba(79,155,108,.20)!important;
+}
+.btn-primary:hover:not(:disabled){box-shadow:0 11px 24px rgba(79,155,108,.25)!important}
+.btn-secondary,.btn-light{
+  color:var(--pp6-green-dark)!important;
+  background:#fff!important;
+  border:1px solid #d3e3d7!important;
+  box-shadow:0 4px 10px rgba(53,94,64,.035)!important;
+}
+.btn-secondary:hover:not(:disabled),.btn-light:hover:not(:disabled){background:#f7fbf8!important;border-color:#bdd8c3!important}
+.btn-danger{color:#ae4a51!important;background:var(--pp6-danger-soft)!important;border-color:#f0c7ca!important}
+.btn-icon{background:#f4faf5!important;color:var(--pp6-green-dark)!important;border-color:#e0ece2!important}
+.btn-icon:hover{background:#edf8ef!important;border-color:#c9e1ce!important}
+
+/* Tabs / selection */
+.tabs{display:flex;gap:7px;flex-wrap:wrap;padding:5px;border:1px solid var(--pp6-line);border-radius:14px;background:#f7fbf8}
+.tab-btn{
+  padding:8px 13px!important;
+  border-radius:10px!important;
+  background:transparent!important;
+  color:#607568!important;
+  font-size:17px!important;
+  border:1px solid transparent!important;
+}
+.tab-btn.active{background:#fff!important;color:var(--pp6-green-dark)!important;border-color:#d6e8da!important;box-shadow:0 4px 10px rgba(52,123,80,.06)!important}
+.teacher-self-summary{border-color:#d8e8dc!important;background:#f5fbf6!important;font-size:18px!important}
+
+/* Tables */
+.table-wrap{
+  border-color:var(--pp6-line)!important;
+  border-radius:14px!important;
+  box-shadow:0 4px 12px rgba(50,92,65,.025);
+}
+.data-table{font-size:17px!important}
+.data-table th{
+  background:linear-gradient(180deg,#f4fbf5,#edf7ef)!important;
+  color:#4f6657!important;
+  border-bottom-color:#d7e7db!important;
+  font-size:17px!important;
+  padding:9px 9px!important;
+}
+.data-table .period-head-row th{
+  background:linear-gradient(90deg,#edf8ef,#fff9df)!important;
+  color:var(--pp6-green-dark)!important;
+  border-bottom-color:#d7e7db!important;
+  font-size:18px!important;
+}
+.data-table td{
+  font-size:17px!important;
+  padding:8px 8px!important;
+  border-bottom-color:#edf2ee!important;
+}
+.data-table tbody tr:hover{background:#fbfefb!important}
+.data-table input,.data-table select{font-size:17px!important;min-height:38px!important;height:38px!important;padding:4px 7px!important}
+.score-input{width:80px}
+.status-select{width:85px}
+.bulk-bar{background:#f4faf5!important;border-color:#d8e8dc!important;border-radius:12px!important}
+
+/* Alerts / Toasts / Modal */
+.alert-inline{font-size:17px!important;line-height:1.4!important;border-radius:12px!important}
+.alert-ok{background:#edf8ef!important;color:#2c6f48!important;border-color:#cde6d3!important}
+.alert-danger{background:#fff0f1!important;color:#a64b52!important;border-color:#f0cbce!important}
+.toast-host .alert{font-size:17px!important;border-radius:13px!important;box-shadow:0 14px 30px rgba(50,92,65,.15)}
+.toast-host .alert-ok{background:#387c54!important}
+.toast-host .alert-danger{background:#b9545b!important}
+.modal{background:rgba(34,55,40,.42);backdrop-filter:blur(4px)}
+.modal-card{border:1px solid #e2eee4!important;border-radius:20px!important;box-shadow:0 25px 65px rgba(39,69,47,.20)!important}
+.paste-box{font-size:16px!important}
+
+/* Content banners */
+.period-banner{
+  margin:0 0 12px;
+  padding:9px 12px;
+  border:1px solid #dbe8b8;
+  border-radius:12px;
+  background:linear-gradient(90deg,#f1f9e8,#fff9dc);
+  color:#5f713d;
+  font-size:18px!important;
+}
+.section-note,.quick-note{color:#738379!important;font-size:17px!important}
+
+/* Small utility elements used across existing pages */
+.link-btn{color:var(--pp6-green-strong)!important}
+.link-btn:hover{background:#edf8ef!important}
+.selection-head .muted{font-size:16px!important}
+.curriculum-title{border-color:#dfece2!important;color:var(--pp6-green-dark)!important;background:#fbfefb!important}
+.curriculum-card .section-kicker{color:var(--pp6-green-strong)!important}
+
+/* Responsive: phone-first, no horizontal page overflow */
+@media (max-width:1100px){
+  .content{padding:22px 20px 50px}
+  .welcome-banner{grid-template-columns:1fr 245px}
+}
+@media (max-width:860px){
+  body{font-size:17px;overflow-x:hidden}
+  .topbar{min-height:60px;height:60px;padding:7px 9px}
+  .brand-logo.brand-logo-large{width:40px;height:40px;border-radius:12px}
+  .brand-logo img{width:32px;height:32px}
+  .brand strong{font-size:21px!important}
+  .brand small{font-size:14px!important;max-width:34vw}
+  .topbar-right{gap:5px;flex:1;justify-content:flex-end;min-width:0}
+  .period-picker{padding:3px 5px!important;border-radius:11px!important;gap:4px!important;min-width:0}
+  .period-picker .period-icon{display:none!important}
+  .period-picker label{display:none!important}
+  .period-controls{gap:3px!important;min-width:0}
+  .period-controls select{min-width:66px!important;width:66px!important;height:34px!important;min-height:34px!important;font-size:15px!important;padding:1px 5px!important}
+  .system-status,.top-logout,.user-pill{display:none!important}
+  .menu-toggle{display:inline-flex!important;flex:none!important;width:40px;height:40px}
+  .layout{min-height:calc(100vh - 60px)}
+  .sidebar{top:60px;width:min(320px,88vw);padding:11px 10px 16px;transform:translateX(-108%);box-shadow:14px 0 30px rgba(48,88,60,.14)}
+  .sidebar.open{transform:translateX(0)}
+  .content{padding:17px 11px 44px;max-width:none}
+  .content h2,.dashboard-head h2{font-size:30px!important}
+  .content h3,.section-heading h3{font-size:22px!important}
+  .welcome-banner{grid-template-columns:1fr;min-height:0;padding:22px 20px;border-radius:21px}
+  .welcome-emblem{display:none}
+  .welcome-copy h1{font-size:31px!important}
+  .welcome-copy p{font-size:18px!important}
+  .dashboard-bottom,.dashboard-grid{grid-template-columns:1fr}
+  .modern-quick{grid-template-columns:1fr}
+  .progress-main{align-items:flex-start;flex-direction:column;gap:15px}
+  .donut{width:130px;height:130px}
+  .donut-inner{width:96px;height:96px}
+  .grid-2,.grid-4,.curriculum-grid{grid-template-columns:1fr}
+  .toolbar{align-items:stretch}
+  .toolbar select,.toolbar .btn{width:100%;min-width:0}
+  .page-head{align-items:flex-start;flex-direction:column}
+  .head-chips{width:100%;flex-wrap:wrap}
+  .tabs{display:grid;grid-template-columns:1fr;width:100%}
+  .tab-btn{width:100%}
+  .table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .data-table{min-width:max-content}
+  .modal{padding:24px 10px 20px}
+  .modal-card{padding:18px 16px}
+}
+@media (max-width:420px){
+  .brand small{display:none}
+  .brand strong{font-size:20px!important}
+  .period-controls select{width:61px!important;min-width:61px!important;font-size:14px!important}
+  .menu-toggle{width:38px;height:38px}
+  .content h2,.dashboard-head h2{font-size:28px!important}
+  .welcome-copy h1{font-size:28px!important}
+}
+
+/* Prevent the school site's existing large accessibility overrides from making mobile layouts oversized. */
+.content,.content p,.content li,.content span,.content label,.content .muted,
+.content .section-note,.content .card p,.content .detail-text,.content .description,
+.content .detail-description,.content .empty-state,.content .help-text,.content .form-note,
+.content .field-help,.content .table-note,.content .record-meta,.content .student-meta,
+.content .subject-meta,.content .status-text,.content .summary-text,.content .legend-row,
+.content .alert-inline,.content .period-banner,.content .history-table,
+.content .data-table,.content .data-table th,.content .data-table td,
+.content .data-table input,.content .data-table select,.content input,.content select,
+.content textarea,.content button,.content .btn,.content .quick-btn,.content .quick-btn b,
+.content .quick-btn small,.content .kpi-label,.content .tab-btn,.content .check-item,
+.content .check-item span{
+  line-height:1.35!important;
+  font-family:'TH Sarabun New','TH Sarabun','thsarabun','Sarabun','Noto Sans Thai',Tahoma,sans-serif!important;
+}
