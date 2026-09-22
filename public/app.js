@@ -189,26 +189,7 @@ async function loadScoreGrid(){
   updateVisibleGrades();
   updateScoreModeUi(hasSaved);
 }
-function updateVisibleGrades(){
-  // BUGFIX: this preview used to feed the raw score straight into calcLocalGrade,
-  // which uses 0-100 percentage thresholds. That only matched what the server
-  // actually saves (see calculateGrade_ in Code.gs) when a subject's ScoreMax
-  // happened to be 100. For any subject with a different "เต็ม" (คะแนนเต็ม),
-  // the live preview grade shown while editing didn't match the grade that
-  // came back after saving. Normalize to a percentage of ScoreMax first, same
-  // as the server does.
-  const maxScore=Number(window._scoreData?.assignment?.scoreMax||100);
-  document.querySelectorAll('#scoreGrid tbody tr').forEach(tr=>{
-    const score=tr.querySelector('.score').value,ret=tr.querySelector('.retake').value,status=tr.querySelector('.status').value;
-    let g='';
-    if(!status&&score!==''){
-      const raw=Number(ret!==''?ret:score);
-      const pct=maxScore>0?raw/maxScore*100:raw;
-      g=calcLocalGrade(pct);
-    }
-    tr.querySelector('.grade').textContent=g??'';
-  });
-}
+function updateVisibleGrades(){document.querySelectorAll('#scoreGrid tbody tr').forEach(tr=>{const score=tr.querySelector('.score').value,ret=tr.querySelector('.retake').value,status=tr.querySelector('.status').value;let g='';if(!status&&score!=='')g=calcLocalGrade(Number(ret!==''?ret:score));tr.querySelector('.grade').textContent=g??'';});}
 function calcLocalGrade(n){if(n>=80)return 4;if(n>=75)return 3.5;if(n>=70)return 3;if(n>=65)return 2.5;if(n>=60)return 2;if(n>=55)return 1.5;if(n>=50)return 1;return 0;}
 async function saveScoreGrid(){
   const id=$('assignSelect').value;if(!id)return;
@@ -399,7 +380,7 @@ async function renderSubjects(p){
   state._assignLevel='1';
 }
 function toggleCurriculumCard(headerEl){const card=headerEl.closest('.curriculum-card');if(card)card.classList.toggle('collapsed');}
-function renderCurriculumTable(level,term,subs){const rows=curriculumRows(level,term,subs);return `<div class="curriculum-table-card"><div class="curriculum-title">ม.${level}</div><div class="table-wrap"><table class="data-table curriculum-table"><thead><tr><th>รหัส</th><th>รายวิชา</th><th>ประเภท</th><th>นก.</th><th>ชม.</th><th>จัดการ</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${escapeHtml(r.code)}</td><td class="l">${escapeHtml(r.name)}</td><td>${escapeHtml(r.type)}</td><td>${r.credit}</td><td>${r.hours}</td><td class="row-actions">${r.subjectId?`<button class="btn-icon" title="แก้ไข" onclick='loadSubjectForEdit(${JSON.stringify({subjectId:r.subjectId,subjectCode:r.code,subjectName:r.name,subjectType:r.type,credit:r.credit,hours:r.hours}).replace(/'/g,"&#39;")})'>✏️</button><button class="btn-icon" title="ลบ" onclick="deleteSubjectNow('${r.subjectId}')">🗑️</button>`:'<span class="muted">ไม่พบในฐานข้อมูล</span>'}</td></tr>`).join('')}</tbody></table></div></div>`;}
+function renderCurriculumTable(level,term,subs){const rows=curriculumRows(level,term,subs);return `<div class="curriculum-table-card"><div class="curriculum-title">ม.${level}</div><div class="table-wrap"><table class="data-table curriculum-table"><thead><tr><th>รหัส</th><th>รายวิชา</th><th>ประเภท</th><th>นก.</th><th>ชม.</th><th>จัดการ</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${escapeHtml(r.code)}</td><td class="l">${escapeHtml(r.name)}</td><td>${escapeHtml(r.type)}</td><td>${r.credit}</td><td>${r.hours}</td><td class="row-actions">${r.subjectId?`<button class="btn-icon" title="แก้ไข" onclick='loadSubjectForEdit(${JSON.stringify({subjectId:r.subjectId,subjectCode:r.code,subjectName:r.name,subjectType:r.type,credit:r.credit,hours:r.hours}).replace(/'/g,"&#39;")})'>✏️</button><button class="btn-icon" title="ลบ" onclick="deleteSubjectNow('${r.subjectId}')">🗑️</button>`:`<button class="btn-icon" title="ยังไม่มีวิชานี้ในฐานข้อมูล — กดเพื่อเพิ่มตามรหัส/ชื่อ/หน่วยกิต/ชม. ของหลักสูตรนี้" onclick='quickAddCurriculumSubject(${JSON.stringify({subjectCode:r.code,subjectName:r.name,subjectType:r.type,credit:r.credit,hours:r.hours}).replace(/'/g,"&#39;")})'>➕</button>`}</td></tr>`).join('')}</tbody></table></div></div>`;}
 function renderTeacherSubjectChecks(level,term,subs){const classes=window._adminData?.classes||[];return availableSubjectsForLevel(level,term,subs,classes).map(s=>`<label class="check-item"><input type="checkbox" class="bt-subject" value="${s.subjectId}"> ${escapeHtml(s.code+' '+s.name)}</label>`).join('')||`<span class="muted">${noSubjectHint_(level,classes)||'ไม่พบวิชาที่ว่างในระดับชั้นนี้'}</span>`;}
 function updateQuickSubjectList(){const level=$('baLevel').value;state._assignLevel=level;const subs=window._adminData.subs||[];const classes=window._adminData.classes||[];$('baSubject').innerHTML=availableSubjectsForLevel(level,state.period.term,subs,classes).map(s=>`<option value="${s.subjectId}">${escapeHtml(s.code+' '+s.name)}</option>`).join('')||'<option value="">ไม่มีวิชาที่ว่าง</option>';updateTeacherQuickLists();}
 function getClassLevelKey_(c){
@@ -440,6 +421,13 @@ function loadSubjectForEdit(s){
 function resetSubjectForm(){['subId','subCode','subName','subCredit','subHours'].forEach(id=>$(id).value='');$('subType').value='พื้นฐาน';$('subjectFormTitle').textContent='เพิ่มรายวิชา';$('subCancelBtn').style.display='none';}
 async function saveNewSubject(){
   try{await call('saveSubject',state.token,{subjectId:$('subId').value||undefined,subjectCode:$('subCode').value,subjectName:$('subName').value,subjectType:$('subType').value,credit:$('subCredit').value,hours:$('subHours').value});toast('บันทึกวิชาแล้ว',true);await renderSubjects($('page'));}catch(e){toast(e.message);}
+}
+// วิชาในตาราง CURRICULUM ที่ขึ้น "ไม่พบในฐานข้อมูล" คือวิชาที่มีอยู่ในหลักสูตร (CURRICULUM_ ฝั่ง
+// Code.gs) แต่ยังไม่เคยถูกสร้างเป็นแถวจริงในชีต SUBJECTS จึงไม่มี subjectId ให้กดแก้ไข/ลบได้ —
+// ปุ่มนี้สร้างวิชานั้นเข้า SUBJECTS ทันทีโดยใช้รหัส/ชื่อ/ประเภท/หน่วยกิต/ชม. ตามหลักสูตร แล้ว
+// รีเฟรชหน้า เพื่อให้แถวนั้นมี subjectId และใช้งาน (มอบหมายผู้สอน ฯลฯ) ได้ทันที
+async function quickAddCurriculumSubject(s){
+  try{await call('saveSubject',state.token,{subjectCode:s.subjectCode,subjectName:s.subjectName,subjectType:s.subjectType,credit:s.credit,hours:s.hours});toast('เพิ่มวิชา '+s.subjectName+' เข้าระบบแล้ว',true);await renderSubjects($('page'));}catch(e){toast(e.message);}
 }
 async function deleteSubjectNow(subjectId){
   if(!confirm('ลบรายวิชานี้?'))return;
