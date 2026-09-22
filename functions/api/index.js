@@ -17,30 +17,17 @@
  *   ฟังก์ชันที่ไม่อยู่ในลิสต์นี้จะยิงไปหา Apps Script สดทุกครั้งเหมือนเดิม
  */
 
-// PERF UPDATE: ตรวจสอบ app.js ทั้งไฟล์แล้วพบว่าฟังก์ชัน "get list" เกือบทุกตัว
-// (getSubjects, getStudentsByClass, getUsers, getClasses, getActivities,
-// getAllTeachingAssignments, getTeachingAvailability, getActivityAssignments,
-// getAcademicPeriods, getClubCandidates ฯลฯ) ถูกเรียกซ้ำทันทีหลัง save/delete
-// ของหน้าเดียวกันเสมอ (pattern: await call('saveXxx',...); await renderXxx($('page')))
-// จึง "ห้ามแคช" เด็ดขาด — ถ้าแคชจะทำให้ผู้ใช้เห็นข้อมูลเก่าค้างหลังกดบันทึก
-// เหมือนบันทึกไม่ติด รายการเดิม 8 ตัวด้านล่างถูกเช็กแล้วว่าเป็นหน้ารายงาน/พรีวิว/
-// พิมพ์เอกสารล้วนๆ ไม่มีจุดไหนเรียกซ้ำทันทีหลัง save ของข้อมูลเดียวกัน จึงปลอดภัย
-// และเพิ่ม getSchoolConfig เข้ามา (saveSchoolConfig ไม่มีการเรียก getSchoolConfig
-// ซ้ำหลังบันทึกเลยในทั้งไฟล์ app.js — ตรวจสอบแล้ว) พร้อมขยาย TTL ให้เหมาะกับแต่ละ
-// ฟังก์ชัน: รายงาน/พิมพ์เอกสารอายุนานขึ้นได้เพราะไม่ใช่หน้าที่กำลังแก้ไขข้อมูลสด
-// ส่วนค่าตั้งค่าโรงเรียนแทบไม่เปลี่ยน ให้ TTL ยาวสุด
-const CACHEABLE_FNS = new Map([
-  ['apiPing', 20],
-  ['getSetupStatus', 20],
-  ['bootstrap', 20],
-  ['getDashboard', 45],
-  ['getPP6Data', 60],
-  ['getClassSummaryData', 60],
-  ['getClassActivitySummaryData', 60],
-  ['getGradeHistory', 60],
-  ['getSchoolConfig', 120]
+const CACHEABLE_FNS = new Set([
+  'apiPing',
+  'getSetupStatus',
+  'bootstrap',
+  'getDashboard',
+  'getPP6Data',
+  'getClassSummaryData',
+  'getClassActivitySummaryData',
+  'getGradeHistory'
 ]);
-const CACHE_TTL_SEC_DEFAULT = 20; // เผื่ออนาคตเพิ่มฟังก์ชันแล้วลืมใส่ตัวเลข TTL
+const CACHE_TTL_SEC = 20;
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -59,7 +46,6 @@ export async function onRequestPost(context) {
   }
 
   const cacheable = CACHEABLE_FNS.has(body.fn);
-  const ttlSec = CACHEABLE_FNS.get(body.fn) || CACHE_TTL_SEC_DEFAULT;
   const cache = caches.default;
   let cacheKey = null;
 
@@ -76,19 +62,32 @@ export async function onRequestPost(context) {
     if (hit) return hit;
   }
 
-  const upstream = await postFollowingRedirects_(APPS_SCRIPT_URL, bodyText);
-  const resultText = await upstream.text();
-  try { JSON.parse(resultText); }
-  catch (e) {
-    const snippet = resultText.replace(/\s+/g, ' ').replace(/<[^>]*>/g, ' ').trim().slice(0, 200);
-    return jsonResponse({ ok: false, error: 'Apps Script ตอบกลับไม่ใช่ JSON (HTTP ' + upstream.status + '): ' + snippet }, 502);
+  // FIX: บางครั้ง request ที่ยิงไป script.google.com จาก edge ของ Cloudflare (โดยเฉพาะ
+  // edge ในยุโรป) จะถูก Google รีไดเรกต์ไปโผล่ที่หน้า "ขอความยินยอมเรื่องคุกกี้"
+  // (consent.google.com — window['ppConfig'] = {productName: 'ConsentUi', ...}) แทนที่
+  // จะถึง doPost จริง แล้วหน้านั้นเองก็ตอบกลับมาไม่ใช่ JSON (เช่น 404) ทำให้ผู้ใช้เจอ error
+  // ทั้งที่ Code.gs ไม่มีปัญหาอะไรเลย — เกิดแบบสุ่ม/เป็นครั้งคราว ไม่ใช่ทุกครั้ง
+  // แก้สองทาง: (1) แนบคุกกี้ SOCS จำลองว่ายอมรับ consent ไว้แล้ว ลดโอกาสโดนหน้านี้ตั้งแต่ต้น
+  // (2) ถ้ายังโดนอยู่ ให้ลองยิงซ้ำอีกครั้งก่อนฟันธงว่า error เพราะปัญหานี้มักหายไปเองในครั้งถัดไป
+  let upstream, trace, resultText;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    ({ res: upstream, trace } = await postFollowingRedirects_(APPS_SCRIPT_URL, bodyText));
+    resultText = await upstream.text();
+    try { JSON.parse(resultText); break; } // ได้ JSON แล้ว ไม่ต้องลองซ้ำ
+    catch (e) {
+      if (attempt === 1) {
+        const snippet = resultText.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
+        return jsonResponse({ ok: false, error: 'Apps Script ตอบกลับไม่ใช่ JSON [' + (trace || []).join(' ; ') + ']: ' + snippet }, 502);
+      }
+      // ลองใหม่อีกครั้งหนึ่งแบบเงียบๆ ก่อนค่อยแจ้ง error จริง
+    }
   }
 
   const response = new Response(resultText, {
     status: upstream.status,
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': cacheable ? `public, max-age=${ttlSec}` : 'no-store'
+      'Cache-Control': cacheable ? `public, max-age=${CACHE_TTL_SEC}` : 'no-store'
     }
   });
 
@@ -115,24 +114,33 @@ function jsonResponse(obj, status = 200) {
 // ถ้าใช้ redirect:'follow' ปกติ ตัว fetch จะเปลี่ยน POST เป็น GET ให้เองตาม
 // spec (ทำให้ body หาย และไปโดน doGet แทน doPost) ฟังก์ชันนี้จึงตามลิงก์เอง
 // พร้อมคงเมธอด POST และ body เดิมไว้ทุกครั้งที่เจอ redirect
-async function postFollowingRedirects_(url, bodyText, maxHops = 5) {
+async function postFollowingRedirects_(url, bodyText, maxHops = 6) {
   let currentUrl = url;
   let method = 'POST';
   let body = bodyText;
+  const trace = [];
+  const short = u => { try { const x = new URL(u); return x.hostname + x.pathname.replace(/\/s\/[^/]+/, '/s/…').slice(0, 40); } catch (e) { return String(u).slice(0, 40); } };
+  // FIX: แนบคุกกี้ SOCS (คุกกี้ที่ Google ใช้เก็บว่าเคยกด "ยอมรับ" คุกกี้แล้ว) ไปกับทุก
+  // request เพื่อลดโอกาสที่ Google จะแทรกหน้า consent.google.com เข้ามาแทนผลลัพธ์จริง
+  // ค่านี้เป็นค่าที่ใช้กันทั่วไปเวลา fetch จากฝั่งเซิร์ฟเวอร์ (ไม่มี browser/session)
+  const CONSENT_COOKIE = 'SOCS=CAESHAgBEhJnd3NfMjAyNDAxMDEtMF9SQzIaAmVuIAEaBgiA_LyaBg';
   for (let i = 0; i < maxHops; i++) {
-    const init = { method, redirect: 'manual' };
-    if (method === 'POST') { init.headers = { 'Content-Type': 'application/json' }; init.body = body; }
+    const init = { method, redirect: 'manual', headers: { 'Cookie': CONSENT_COOKIE } };
+    if (method === 'POST') { init.headers['Content-Type'] = 'application/json'; init.body = body; }
     const res = await fetch(currentUrl, init);
+    trace.push(method + ' ' + short(currentUrl) + ' → ' + res.status);
     if ([301, 302, 303, 307, 308].includes(res.status)) {
       const location = res.headers.get('location');
-      if (!location) return res;
+      if (!location) return { res, finalUrl: currentUrl, trace };
       currentUrl = new URL(location, currentUrl).toString();
-      // Apps Script: doPost ทำงานตอน POST ครั้งแรกแล้ว และตอบ 302 ไปยัง URL ที่เก็บ "ผลลัพธ์" ซึ่งต้องเรียกด้วย GET
-      // (ยิง POST ซ้ำไปที่ URL นั้นจะได้หน้า HTML error 405) — เฉพาะ 307/308 เท่านั้นที่ต้องคง POST เดิม
-      if (res.status !== 307 && res.status !== 308) { method = 'GET'; body = undefined; }
+      // - ถ้าปลายทางเป็น script.google.com (เช่น /a/macros/<โดเมน>/s/.../exec ของบัญชี Workspace) ต้องคง POST + body เดิม
+      //   ไม่งั้นจะไปตก doGet แล้วได้หน้า HTML กลับมา
+      // - ถ้าปลายทางเป็น *.googleusercontent.com นั่นคือลิงก์เก็บ "ผลลัพธ์" ที่ doPost ทำเสร็จแล้ว ต้องเรียกด้วย GET
+      const host = new URL(currentUrl).hostname;
+      if (host.endsWith('googleusercontent.com')) { method = 'GET'; body = undefined; }
       continue;
     }
-    return res;
+    return { res, finalUrl: currentUrl, trace };
   }
   throw new Error('redirect ไปเรื่อยๆ เกิน ' + maxHops + ' ครั้ง');
 }
