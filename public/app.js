@@ -515,23 +515,49 @@ async function registerMyTeaching(){return registerMyTeachingBatch();}
 /* ---------------- Activities (teacher entry) ---------------- */
 async function renderActivities(p){
   const aas=await call('getActivityAssignments',state.token,state.period.year,state.period.term);
-  p.innerHTML=`<h2>กิจกรรมพัฒนาผู้เรียน</h2>${periodBannerHtml()}<div class="card"><div class="toolbar"><select id="activitySelect" onchange="loadActivityGrid()"><option value="">-- เลือกกิจกรรม / ห้อง --</option>${aas.map(a=>`<option value="${a.activityAssignmentId}">${escapeHtml(a.activityName+(a.groupName?' ('+a.groupName+')':'')+(a.className?' · '+a.className:' · คละห้อง'))}</option>`).join('')}</select><button class="btn btn-secondary" onclick="openActivityPasteModal()">📋 นำเข้า/วางผลจาก Excel</button><button class="btn btn-primary" onclick="saveActivityGrid()">บันทึก</button></div><div id="activityGrid" class="table-wrap"></div></div>`;
+  p.innerHTML=`<h2>กิจกรรมพัฒนาผู้เรียน</h2>${periodBannerHtml()}<div class="card"><div class="toolbar score-toolbar entry-toolbar"><select id="activitySelect" onchange="loadActivityGrid()"><option value="">-- เลือกกิจกรรม / ห้อง --</option>${aas.map(a=>`<option value="${a.activityAssignmentId}">${escapeHtml(a.activityName+(a.groupName?' ('+a.groupName+')':'')+(a.className?' · '+a.className:' · คละห้อง'))}</option>`).join('')}</select><button id="pasteActivityBtn" class="btn btn-secondary" onclick="openActivityPasteModal()">📋 นำเข้า/วางผลจาก Excel</button><button id="editActivityBtn" class="btn btn-secondary" onclick="enableActivityEditing()" disabled>✏️ แก้ไขผลกิจกรรม</button><button id="saveActivityBtn" class="btn btn-primary" onclick="saveActivityGrid()" disabled>💾 บันทึกผล</button><button id="clearActivityBtn" class="btn btn-danger" onclick="clearActivityGrid()" disabled>🧹 ล้างผล</button></div><div id="activityModeInfo"></div><div id="activityInfo"></div><div id="activityGrid" class="table-wrap"></div></div>`;
   window._activityAssignments=aas;
 }
+function activityRowsHaveData(rows){return (rows||[]).some(r=>String(r.result??'').trim()!==''||String(r.score??'').trim()!=='');}
+function setActivityInputsDisabled(disabled){document.querySelectorAll('#activityGrid .act-result,#activityGrid .act-score').forEach(el=>{el.disabled=disabled;el.classList.toggle('score-locked',disabled);});}
+function updateActivityModeUi(hasSaved){
+  const edit=$('editActivityBtn'),save=$('saveActivityBtn'),clear=$('clearActivityBtn'); if(!edit||!save||!clear)return;
+  if(hasSaved){edit.disabled=false;save.disabled=true;clear.disabled=false;setActivityInputsDisabled(true);if($('activityModeInfo'))$('activityModeInfo').innerHTML='<div class="alert-inline alert-ok score-mode-badge">🔒 บันทึกแล้ว — กด “แก้ไขผลกิจกรรม” ก่อนปรับข้อมูล</div>';}
+  else{edit.disabled=true;save.disabled=false;clear.disabled=false;setActivityInputsDisabled(false);if($('activityModeInfo'))$('activityModeInfo').innerHTML='<div class="alert-inline alert-ok score-mode-badge">✍️ พร้อมกรอก/แก้ไขผลกิจกรรม</div>';}
+}
+function enableActivityEditing(showMessage=true){
+  if(!$('activitySelect')?.value)return toast('กรุณาเลือกกิจกรรมก่อน');
+  if(!$('activityGrid')?.querySelector('tbody tr'))return toast('ยังไม่มีรายชื่อนักเรียนในกิจกรรม');
+  setActivityInputsDisabled(false);if($('editActivityBtn'))$('editActivityBtn').disabled=true;if($('saveActivityBtn'))$('saveActivityBtn').disabled=false;if($('clearActivityBtn'))$('clearActivityBtn').disabled=false;
+  if($('activityModeInfo'))$('activityModeInfo').innerHTML='<div class="alert-inline alert-ok score-mode-badge">✏️ อยู่ในโหมดแก้ไข — ตรวจข้อมูลแล้วกด “บันทึกผล”</div>';
+  if(showMessage)toast('เปิดโหมดแก้ไขผลกิจกรรมแล้ว',true);
+}
 async function loadActivityGrid(){
-  const id=$('activitySelect').value;if(!id)return;
+  const id=$('activitySelect').value;if(!id){$('activityGrid').innerHTML='';if($('saveActivityBtn'))$('saveActivityBtn').disabled=true;if($('editActivityBtn'))$('editActivityBtn').disabled=true;if($('clearActivityBtn'))$('clearActivityBtn').disabled=true;return;}
   $('activityGrid').innerHTML='';$('activityGrid').appendChild(showSpinner());
   const d=await call('getActivityEntry',state.token,id);window._activityData=d;
+  const hasSaved=activityRowsHaveData(d.rows);
   const showClass=d.assignment.crossClass;
-  $('activityGrid').innerHTML=`<table class="data-table"><thead>${periodHeadRow(showClass?6:5)}<tr><th>ที่</th>${showClass?'<th>ห้อง</th>':''}<th>เลขประจำตัว</th><th>ชื่อ-สกุล</th><th>ผล</th><th>คะแนน</th></tr></thead><tbody>${d.rows.map(r=>`<tr data-aeid="${r.activityEnrollmentId}"><td>${r.classNo}</td>${showClass?`<td>${escapeHtml(r.className)}</td>`:''}<td>${escapeHtml(r.studentCode)}</td><td>${escapeHtml(r.name)}</td><td><select class="act-result"><option value="">-</option><option value="ผ" ${r.result==='ผ'?'selected':''}>ผ</option><option value="มผ" ${r.result==='มผ'?'selected':''}>มผ</option></select></td><td><input class="act-score score-input" value="${r.score??''}"></td></tr>`).join('')}</tbody></table>`;
+  $('activityInfo').innerHTML=`<div class="alert-inline alert-ok">${escapeHtml(d.assignment.activityName)}${d.assignment.className?' · '+escapeHtml(d.assignment.className):' · คละห้อง'}${hasSaved?' · มีข้อมูลที่บันทึกแล้ว':''}</div>`;
+  $('activityGrid').innerHTML=`<table class="data-table"><thead>${periodHeadRow(showClass?6:5)}<tr><th>ที่</th>${showClass?'<th>ห้อง</th>':''}<th>เลขประจำตัว</th><th>ชื่อ-สกุล</th><th>ผล</th><th>คะแนน</th></tr></thead><tbody>${d.rows.map(r=>`<tr data-aeid="${r.activityEnrollmentId}"><td>${r.classNo}</td>${showClass?`<td>${escapeHtml(r.className)}</td>`:''}<td>${escapeHtml(r.studentCode)}</td><td>${escapeHtml(r.name)}</td><td><select class="act-result"><option value="">-</option><option value="ผ" ${r.result==='ผ'?'selected':''}>ผ</option><option value="มผ" ${r.result==='มผ'?'selected':''}>มผ</option></select></td><td><input class="act-score score-input" type="number" min="0" step="0.01" value="${r.score??''}"></td></tr>`).join('')}</tbody></table>`;
+  updateActivityModeUi(hasSaved);
 }
 async function saveActivityGrid(){
   const id=$('activitySelect').value;if(!id)return toast('กรุณาเลือกกิจกรรมก่อน');
+  const btn=$('saveActivityBtn');if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
   const rows=[...document.querySelectorAll('#activityGrid tbody tr')].map(tr=>({activityEnrollmentId:tr.dataset.aeid,result:tr.querySelector('.act-result').value,score:tr.querySelector('.act-score').value,remark:''}));
-  try{const r=await call('saveActivityResults',state.token,{activityAssignmentId:id,rows});toast('บันทึก '+r.saved+' รายการ',true);}catch(e){toast(e.message);}
+  try{const r=await call('saveActivityResults',state.token,{activityAssignmentId:id,rows});toast('บันทึก '+r.saved+' รายการเรียบร้อย',true);await loadActivityGrid();}catch(e){toast(e.message);}finally{if(btn){btn.disabled=false;btn.textContent='💾 บันทึกผล';}}
+}
+async function clearActivityGrid(){
+  const id=$('activitySelect')?.value;if(!id)return toast('กรุณาเลือกกิจกรรมก่อน');
+  const name=$('activitySelect').options[$('activitySelect').selectedIndex]?.text||'กิจกรรมที่เลือก';
+  if(!confirm(`ต้องการล้างผลกิจกรรมทั้งหมดของ ${name} ใช่หรือไม่?\n\nระบบจะล้างผล ผ/มผ คะแนน และหมายเหตุของนักเรียนในกิจกรรมนี้ แต่จะไม่ลบรายชื่อสมาชิก`))return;
+  const btn=$('clearActivityBtn');if(btn){btn.disabled=true;btn.textContent='กำลังล้าง...';}
+  try{const r=await call('clearActivityResults',state.token,id);toast('ล้างผลกิจกรรมแล้ว '+(r.cleared||0)+' รายการ',true);await loadActivityGrid();}catch(e){toast(e.message);}finally{if(btn){btn.disabled=false;btn.textContent='🧹 ล้างผล';}}
 }
 function openActivityPasteModal(){
   if(!$('activitySelect')||!$('activitySelect').value)return toast('กรุณาเลือกกิจกรรมก่อน');
+  enableActivityEditing(false);
   $('page').insertAdjacentHTML('beforeend',`<div class="modal" id="actPasteModal"><div class="modal-card"><h3>นำเข้า/วางผลจาก Excel</h3><p class="muted">รองรับการวางจาก Excel (Tab) หรือไฟล์ .csv (Comma) รูปแบบ: เลขที่/เลขประจำตัว, ผล(ผ/มผ), คะแนน — หรือวางเฉพาะคะแนน 1 คอลัมน์</p><input type="file" id="actCsvFile" accept=".csv,text/csv" onchange="readFileInto('actCsvFile','actPasteText')"><textarea id="actPasteText" class="paste-box" placeholder="ตัวอย่าง&#10;1&#9;ผ&#9;80&#10;2&#9;ผ&#9;75"></textarea><div class="toolbar" style="margin-top:12px"><button class="btn btn-primary" onclick="applyActivityPaste()">ตรวจสอบและนำไปใส่ตาราง</button><button class="btn btn-secondary" onclick="closeModal('actPasteModal')">ยกเลิก</button></div><div id="actPastePreview"></div></div></div>`);
 }
 function applyActivityPaste(){
@@ -573,20 +599,47 @@ async function renderAssessment(p){
     p.innerHTML=`<h2>อ่านคิดวิเคราะห์เขียน / คุณลักษณะ / สมรรถนะ</h2><div class="card"><div class="alert-inline alert-danger"><b>ยังไม่มีห้องที่ได้รับสิทธิ์ครูประจำชั้น</b><br>ผู้ดูแลระบบสามารถเชื่อมสิทธิ์ได้ที่เมนู <b>“ตั้งค่าห้อง / ครูประจำชั้น”</b> โดยเลือกชื่อครูในช่อง <b>ครูประจำชั้น 1</b> หรือ <b>ครูประจำชั้น 2</b> ของห้อง</div></div>`;
     return;
   }
-  p.innerHTML=`<h2>อ่านคิดวิเคราะห์เขียน / คุณลักษณะ / สมรรถนะ</h2>${periodBannerHtml()}<div class="card"><div class="toolbar"><select id="assessClass" onchange="loadAssessmentGrid()"><option value="">-- เลือกห้อง --</option>${cls.map(c=>`<option value="${c.classId}">${escapeHtml(c.className)}</option>`).join('')}</select><button class="btn btn-secondary" onclick="openAssessPasteModal()">📋 นำเข้า/วางผลจาก Excel</button><button class="btn btn-secondary" onclick="downloadCsv('เทมเพลต_ประเมินคุณลักษณะ.csv',CSV_TEMPLATES.assessment)">⬇ เทมเพลต CSV</button><button class="btn btn-primary" onclick="saveAssessmentGrid()">บันทึก</button></div><div id="assessmentGrid" class="table-wrap"></div></div>`;
+  p.innerHTML=`<h2>อ่านคิดวิเคราะห์เขียน / คุณลักษณะ / สมรรถนะ</h2>${periodBannerHtml()}<div class="card"><div class="toolbar score-toolbar entry-toolbar"><select id="assessClass" onchange="loadAssessmentGrid()"><option value="">-- เลือกห้อง --</option>${cls.map(c=>`<option value="${c.classId}">${escapeHtml(c.className)}</option>`).join('')}</select><button id="pasteAssessBtn" class="btn btn-secondary" onclick="openAssessPasteModal()">📋 นำเข้า/วางผลจาก Excel</button><button class="btn btn-secondary" onclick="downloadCsv('เทมเพลต_ประเมินคุณลักษณะ.csv',CSV_TEMPLATES.assessment)">⬇ เทมเพลต CSV</button><button id="editAssessBtn" class="btn btn-secondary" onclick="enableAssessmentEditing()" disabled>✏️ แก้ไขผลประเมิน</button><button id="saveAssessBtn" class="btn btn-primary" onclick="saveAssessmentGrid()" disabled>💾 บันทึกผล</button><button id="clearAssessBtn" class="btn btn-danger" onclick="clearAssessmentGrid()" disabled>🧹 ล้างผล</button></div><div id="assessmentModeInfo"></div><div id="assessmentInfo"></div><div id="assessmentGrid" class="table-wrap"></div></div>`;
 }
 async function loadAssessmentGrid(){
-  const id=$('assessClass').value;if(!id)return;
+  const id=$('assessClass').value;if(!id){$('assessmentGrid').innerHTML='';if($('saveAssessBtn'))$('saveAssessBtn').disabled=true;if($('editAssessBtn'))$('editAssessBtn').disabled=true;if($('clearAssessBtn'))$('clearAssessBtn').disabled=true;return;}
   $('assessmentGrid').innerHTML='';$('assessmentGrid').appendChild(showSpinner());
   const d=await call('getAssessmentEntry',state.token,id);window._assessData=d;
+  const hasSaved=assessmentRowsHaveData(d.students);
+  $('assessmentInfo').innerHTML=`<div class="alert-inline alert-ok">ห้อง ${escapeHtml((d.students[0]&&d.students[0].className)||id)}${hasSaved?' · มีผลประเมินที่บันทึกแล้ว':''}</div>`;
   $('assessmentGrid').innerHTML=`<table class="data-table"><thead>${periodHeadRow(6)}<tr><th>ที่</th><th>เลขประจำตัว</th><th>ชื่อ-สกุล</th><th>อ่านฯ</th><th>คุณลักษณะฯ</th><th>สมรรถนะ</th></tr></thead><tbody>${d.students.map(r=>`<tr data-sid="${r.studentId}"><td>${r.classNo}</td><td>${escapeHtml(r.studentCode)}</td><td>${escapeHtml(r.name)}</td><td><select class="read"><option value="">-</option>${[1,2,3].map(x=>`<option ${String(r.reading)===String(x)?'selected':''}>${x}</option>`).join('')}</select></td><td><select class="char"><option value="">-</option>${[1,2,3].map(x=>`<option ${String(r.characteristics)===String(x)?'selected':''}>${x}</option>`).join('')}</select></td><td><select class="comp"><option value="">-</option>${[1,2,3].map(x=>`<option ${String(r.competencies)===String(x)?'selected':''}>${x}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table>`;
+  updateAssessmentModeUi(hasSaved);
+}
+function assessmentRowsHaveData(rows){return (rows||[]).some(r=>String(r.reading??'').trim()!==''||String(r.characteristics??'').trim()!==''||String(r.competencies??'').trim()!=='');}
+function setAssessmentInputsDisabled(disabled){document.querySelectorAll('#assessmentGrid .read,#assessmentGrid .char,#assessmentGrid .comp').forEach(el=>{el.disabled=disabled;el.classList.toggle('score-locked',disabled);});}
+function updateAssessmentModeUi(hasSaved){
+  const edit=$('editAssessBtn'),save=$('saveAssessBtn'),clear=$('clearAssessBtn');if(!edit||!save||!clear)return;
+  if(hasSaved){edit.disabled=false;save.disabled=true;clear.disabled=false;setAssessmentInputsDisabled(true);if($('assessmentModeInfo'))$('assessmentModeInfo').innerHTML='<div class="alert-inline alert-ok score-mode-badge">🔒 บันทึกแล้ว — กด “แก้ไขผลประเมิน” ก่อนปรับข้อมูล</div>';}
+  else{edit.disabled=true;save.disabled=false;clear.disabled=false;setAssessmentInputsDisabled(false);if($('assessmentModeInfo'))$('assessmentModeInfo').innerHTML='<div class="alert-inline alert-ok score-mode-badge">✍️ พร้อมกรอก/แก้ไขผลประเมิน</div>';}
+}
+function enableAssessmentEditing(showMessage=true){
+  if(!$('assessClass')?.value)return toast('กรุณาเลือกห้องก่อน');
+  if(!$('assessmentGrid')?.querySelector('tbody tr'))return toast('ยังไม่มีรายชื่อนักเรียน');
+  setAssessmentInputsDisabled(false);if($('editAssessBtn'))$('editAssessBtn').disabled=true;if($('saveAssessBtn'))$('saveAssessBtn').disabled=false;if($('clearAssessBtn'))$('clearAssessBtn').disabled=false;
+  if($('assessmentModeInfo'))$('assessmentModeInfo').innerHTML='<div class="alert-inline alert-ok score-mode-badge">✏️ อยู่ในโหมดแก้ไข — ตรวจข้อมูลแล้วกด “บันทึกผล”</div>';
+  if(showMessage)toast('เปิดโหมดแก้ไขผลประเมินแล้ว',true);
 }
 async function saveAssessmentGrid(){
+  const id=$('assessClass').value;if(!id)return toast('กรุณาเลือกห้องก่อน');
+  const btn=$('saveAssessBtn');if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
   const rows=[...document.querySelectorAll('#assessmentGrid tbody tr')].map(tr=>({studentId:tr.dataset.sid,reading:tr.querySelector('.read').value,characteristics:tr.querySelector('.char').value,competencies:tr.querySelector('.comp').value,remark:''}));
-  try{const r=await call('saveAssessments',state.token,{classId:$('assessClass').value,rows});toast('บันทึก '+r.saved+' รายการ',true);}catch(e){toast(e.message);}
+  try{const r=await call('saveAssessments',state.token,{classId:id,rows});toast('บันทึก '+r.saved+' รายการเรียบร้อย',true);await loadAssessmentGrid();}catch(e){toast(e.message);}finally{if(btn){btn.disabled=false;btn.textContent='💾 บันทึกผล';}}
+}
+async function clearAssessmentGrid(){
+  const id=$('assessClass')?.value;if(!id)return toast('กรุณาเลือกห้องก่อน');
+  const name=$('assessClass').options[$('assessClass').selectedIndex]?.text||'ห้องที่เลือก';
+  if(!confirm(`ต้องการล้างผลประเมินทั้งหมดของ ${name} ใช่หรือไม่?\n\nระบบจะล้าง อ่านคิดวิเคราะห์เขียน, คุณลักษณะอันพึงประสงค์, สมรรถนะ และหมายเหตุ แต่จะไม่ลบรายชื่อนักเรียน`))return;
+  const btn=$('clearAssessBtn');if(btn){btn.disabled=true;btn.textContent='กำลังล้าง...';}
+  try{const r=await call('clearAssessments',state.token,id);toast('ล้างผลประเมินแล้ว '+(r.cleared||0)+' รายการ',true);await loadAssessmentGrid();}catch(e){toast(e.message);}finally{if(btn){btn.disabled=false;btn.textContent='🧹 ล้างผล';}}
 }
 function openAssessPasteModal(){
   if(!$('assessClass')||!$('assessClass').value)return toast('กรุณาเลือกห้องก่อน');
+  enableAssessmentEditing(false);
   $('page').insertAdjacentHTML('beforeend',`<div class="modal" id="assessPasteModal"><div class="modal-card"><h3>นำเข้า/วางผลจาก Excel</h3><p class="muted">รองรับการวางจาก Excel (Tab) หรือไฟล์ .csv (Comma) และข้ามหัวตารางให้อัตโนมัติ รูปแบบ: เลขที่/เลขประจำตัว, อ่านฯ, คุณลักษณะฯ, สมรรถนะ — ค่าที่รองรับ: 1, 2, 3 หรือ ดี/พอใช้/ปรับปรุง</p><input type="file" id="assessCsvFile" accept=".csv,text/csv" onchange="readFileInto('assessCsvFile','assessPasteText')"><textarea id="assessPasteText" class="paste-box" style="margin-top:10px" placeholder="ตัวอย่าง&#10;1&#9;3&#9;3&#9;2&#10;2&#9;2&#9;3&#9;3"></textarea><div class="toolbar" style="margin-top:12px"><button class="btn btn-primary" onclick="applyAssessPaste()">ตรวจสอบและนำไปใส่ตาราง</button><button class="btn btn-secondary" onclick="closeModal('assessPasteModal')">ยกเลิก</button></div><div id="assessPastePreview"></div></div></div>`);
 }
 function assessLevelFromText_(v){
