@@ -1013,3 +1013,17 @@ button{border:0}
   .modal{padding:20px 10px 28px!important}
   .modal-card{padding:18px!important}
 }
+
+/* ===== Score editing / clear controls ===== */
+.score-toolbar{align-items:center}
+.score-toolbar > select{flex:1 1 360px;min-width:230px}
+.score-toolbar > .btn{white-space:nowrap}
+.score-toolbar .btn-danger{background:linear-gradient(135deg,#fff1f2,#ffe4e6);color:#b4233d;border:1px solid #fecdd3}
+.score-toolbar .btn-danger:hover:not(:disabled){background:linear-gradient(135deg,#ffe4e6,#ffd6dc);box-shadow:0 8px 18px rgba(190,24,60,.12)}
+.score-mode-badge{margin:4px 0 8px}
+.score-locked{background:#f8fafc!important;color:#64748b!important;cursor:not-allowed!important;opacity:.92}
+@media(max-width:680px){
+  .score-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .score-toolbar > select{grid-column:1/-1;width:100%}
+  .score-toolbar > .btn{width:100%}
+}

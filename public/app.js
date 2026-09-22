@@ -141,18 +141,53 @@ async function renderDashboard(p){
 async function renderScores(p){
   const assigns=await call('getTeacherAssignments',state.token,state.period.year,state.period.term);
   if(!assigns.length){p.innerHTML='<div class="card"><h2>กรอกคะแนนรายวิชา</h2><p class="muted">ยังไม่มีรายวิชาที่กำหนดให้บัญชีนี้</p></div>';return;}
-  p.innerHTML=`<h2>กรอกคะแนนรายวิชา</h2>${periodBannerHtml()}<div class="card"><div class="toolbar"><select id="assignSelect" onchange="loadScoreGrid()"><option value="">-- เลือกวิชา / ห้อง --</option>${assigns.map(a=>`<option value="${a.assignmentId}">${escapeHtml(a.subjectCode+' '+a.subjectName+' · '+a.className)}</option>`).join('')}</select><button class="btn btn-secondary" onclick="openPasteScoreModal()">📋 วางคะแนนจาก Excel</button><button id="saveScoreBtn" class="btn btn-primary" onclick="saveScoreGrid()" disabled>บันทึกคะแนน</button></div><div id="scoreInfo"></div><div id="scoreGrid" class="table-wrap"></div></div>`;
+  p.innerHTML=`<h2>กรอกคะแนนรายวิชา</h2>${periodBannerHtml()}<div class="card"><div class="toolbar score-toolbar"><select id="assignSelect" onchange="loadScoreGrid()"><option value="">-- เลือกวิชา / ห้อง --</option>${assigns.map(a=>`<option value="${a.assignmentId}">${escapeHtml(a.subjectCode+' '+a.subjectName+' · '+a.className)}</option>`).join('')}</select><button id="pasteScoreBtn" class="btn btn-secondary" onclick="openPasteScoreModal()">📋 วางคะแนนจาก Excel</button><button id="editScoreBtn" class="btn btn-secondary" onclick="enableScoreEditing()" disabled>✏️ แก้ไขคะแนน</button><button id="saveScoreBtn" class="btn btn-primary" onclick="saveScoreGrid()" disabled>💾 บันทึกคะแนน</button><button id="clearScoreBtn" class="btn btn-danger" onclick="clearScoreGrid()" disabled>🧹 ล้างคะแนน</button></div><div id="scoreModeInfo"></div><div id="scoreInfo"></div><div id="scoreGrid" class="table-wrap"></div></div>`;
   window._assignments=assigns;
 }
+
+function scoreRowsHaveData(rows){
+  return (rows||[]).some(r=>String(r.score??'').trim()!==''||String(r.status??'').trim()!==''||String(r.retakeScore??'').trim()!==''||String(r.finalGrade??'').trim()!=='');
+}
+function setScoreInputsDisabled(disabled){
+  document.querySelectorAll('#scoreGrid .score,#scoreGrid .retake,#scoreGrid .status').forEach(el=>{el.disabled=disabled;el.classList.toggle('score-locked',disabled);});
+}
+function updateScoreModeUi(hasSaved){
+  const edit=$('editScoreBtn'),save=$('saveScoreBtn'),clear=$('clearScoreBtn');
+  if(!edit||!save||!clear)return;
+  if(hasSaved){
+    edit.disabled=false;edit.textContent='✏️ แก้ไขคะแนน';
+    save.disabled=true;
+    clear.disabled=false;
+    setScoreInputsDisabled(true);
+    if($('scoreModeInfo')) $('scoreModeInfo').innerHTML='<div class="alert-inline alert-ok score-mode-badge">🔒 บันทึกแล้ว — กด “แก้ไขคะแนน” ก่อนปรับข้อมูล</div>';
+  }else{
+    edit.disabled=true;
+    save.disabled=false;
+    clear.disabled=false;
+    setScoreInputsDisabled(false);
+    if($('scoreModeInfo')) $('scoreModeInfo').innerHTML='<div class="alert-inline alert-ok score-mode-badge">✍️ พร้อมกรอก/แก้ไขคะแนน</div>';
+  }
+}
+function enableScoreEditing(showMessage=true){
+  if(!$('assignSelect')||!$('assignSelect').value)return toast('กรุณาเลือกวิชาก่อน');
+  if(!$('scoreGrid')||!$('scoreGrid').querySelector('tbody tr'))return toast('ยังไม่มีรายชื่อนักเรียน');
+  setScoreInputsDisabled(false);
+  if($('editScoreBtn'))$('editScoreBtn').disabled=true;
+  if($('saveScoreBtn'))$('saveScoreBtn').disabled=false;
+  if($('clearScoreBtn'))$('clearScoreBtn').disabled=false;
+  if($('scoreModeInfo'))$('scoreModeInfo').innerHTML='<div class="alert-inline alert-ok score-mode-badge">✏️ อยู่ในโหมดแก้ไข — ตรวจข้อมูลแล้วกด “บันทึกคะแนน”</div>';
+  if(showMessage)toast('เปิดโหมดแก้ไขคะแนนแล้ว',true);
+}
 async function loadScoreGrid(){
-  const id=$('assignSelect').value;if(!id){$('scoreGrid').innerHTML='';$('saveScoreBtn').disabled=true;return;}
+  const id=$('assignSelect').value;if(!id){$('scoreGrid').innerHTML='';$('saveScoreBtn').disabled=true;if($('editScoreBtn'))$('editScoreBtn').disabled=true;if($('clearScoreBtn'))$('clearScoreBtn').disabled=true;return;}
   $('scoreGrid').innerHTML='';$('scoreGrid').appendChild(showSpinner());
   const data=await call('getScoreEntry',state.token,id);window._scoreData=data;
-  $('scoreInfo').innerHTML=`<div class="alert-inline alert-ok">${escapeHtml(data.assignment.subjectCode+' '+data.assignment.subjectName)} · ${escapeHtml(data.assignment.className)} · คะแนนเต็ม ${data.assignment.scoreMax}</div>`;
+  const hasSaved=scoreRowsHaveData(data.rows);
+  $('scoreInfo').innerHTML=`<div class="alert-inline alert-ok">${escapeHtml(data.assignment.subjectCode+' '+data.assignment.subjectName)} · ${escapeHtml(data.assignment.className)} · คะแนนเต็ม ${data.assignment.scoreMax}${hasSaved?' · มีข้อมูลที่บันทึกแล้ว':''}</div>`;
   $('scoreGrid').innerHTML=`<table class="data-table"><thead>${periodHeadRow(7)}<tr><th>ที่</th><th>เลขประจำตัว</th><th>ชื่อ-สกุล</th><th>คะแนน</th><th>ร/มส</th><th>แก้ตัว</th><th>เกรด</th></tr></thead><tbody>${data.rows.map((r,i)=>`<tr data-enr="${escapeHtml(r.enrollmentId)}"><td>${r.classNo}</td><td>${escapeHtml(r.studentCode)}</td><td>${escapeHtml(r.prefix+r.firstName+' '+r.lastName)}</td><td><input class="score-input score" type="number" min="0" max="${data.assignment.scoreMax}" step="0.01" value="${r.score??''}"></td><td><select class="status-select status"><option value="">ปกติ</option><option value="ร" ${r.status==='ร'?'selected':''}>ร</option><option value="มส" ${r.status==='มส'?'selected':''}>มส</option></select></td><td><input class="score-input retake" type="number" min="0" max="${data.assignment.scoreMax}" step="0.01" value="${r.retakeScore??''}"></td><td class="grade">${r.finalGrade??''}</td></tr>`).join('')}</tbody></table>`;
-  $('saveScoreBtn').disabled=false;
   document.querySelectorAll('#scoreGrid .score,#scoreGrid .retake,#scoreGrid .status').forEach(el=>el.addEventListener('input',updateVisibleGrades));
   updateVisibleGrades();
+  updateScoreModeUi(hasSaved);
 }
 function updateVisibleGrades(){document.querySelectorAll('#scoreGrid tbody tr').forEach(tr=>{const score=tr.querySelector('.score').value,ret=tr.querySelector('.retake').value,status=tr.querySelector('.status').value;let g='';if(!status&&score!=='')g=calcLocalGrade(Number(ret!==''?ret:score));tr.querySelector('.grade').textContent=g??'';});}
 function calcLocalGrade(n){if(n>=80)return 4;if(n>=75)return 3.5;if(n>=70)return 3;if(n>=65)return 2.5;if(n>=60)return 2;if(n>=55)return 1.5;if(n>=50)return 1;return 0;}
@@ -163,8 +198,19 @@ async function saveScoreGrid(){
   try{const r=await call('saveScores',state.token,{assignmentId:id,rows});toast('บันทึก '+r.saved+' รายการเรียบร้อย',true);await loadScoreGrid();}
   catch(e){toast(e.message);}finally{btn.disabled=false;btn.textContent=orig;}
 }
+async function clearScoreGrid(){
+  const id=$('assignSelect')?.value;if(!id)return toast('กรุณาเลือกวิชาก่อน');
+  const name=$('assignSelect').options[$('assignSelect').selectedIndex]?.text||'วิชาที่เลือก';
+  const ok=confirm(`ต้องการล้างคะแนนทั้งหมดของ ${name} ใช่หรือไม่?\n\nระบบจะล้างคะแนน, ร/มส, คะแนนแก้ตัว และเกรดของนักเรียนในวิชานี้ แล้วคงรายชื่อนักเรียนไว้`);
+  if(!ok)return;
+  const btn=$('clearScoreBtn'); if(btn){btn.disabled=true;btn.textContent='กำลังล้าง...';}
+  try{const r=await call('clearScores',state.token,id);toast('ล้างคะแนนแล้ว '+(r.cleared||0)+' รายการ',true);await loadScoreGrid();}
+  catch(e){toast(e.message);}
+  finally{if(btn){btn.disabled=false;btn.textContent='🧹 ล้างคะแนน';}}
+}
 function openPasteScoreModal(){
   if(!$('assignSelect')||!$('assignSelect').value)return toast('กรุณาเลือกวิชาก่อน');
+  enableScoreEditing(false);
   $('page').insertAdjacentHTML('beforeend',`<div class="modal" id="pasteModal"><div class="modal-card"><h3>วางคะแนนจาก Excel</h3><p class="muted">รองรับ: คะแนนอย่างเดียว 1 คอลัมน์ หรือ เลขที่ + คะแนน หรือ เลขประจำตัว + คะแนน</p><textarea id="pasteText" class="paste-box" placeholder="ตัวอย่าง&#10;68&#10;75&#10;82"></textarea><div class="toolbar" style="margin-top:12px"><button class="btn btn-primary" onclick="applyPasteScores()">ตรวจสอบและนำไปใส่ตาราง</button><button class="btn btn-secondary" onclick="closeModal('pasteModal')">ยกเลิก</button></div><div id="pastePreview"></div></div></div>`);
 }
 function applyPasteScores(){
