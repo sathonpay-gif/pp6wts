@@ -876,11 +876,20 @@ button{border:0}
 
 /* Alerts / Toasts / Modal */
 .alert-inline{font-size:17px!important;line-height:1.4!important;border-radius:12px!important}
-.alert-ok{background:#edf8ef!important;color:#2c6f48!important;border-color:#cde6d3!important}
+.alert-inline.alert-ok,
+.alert-ok{background:linear-gradient(135deg,#2f8a58,#226a43)!important;color:#fff!important;border-color:#1f633e!important;box-shadow:0 8px 18px rgba(34,106,67,.14)!important}
+.alert-inline.alert-ok b,
+.alert-inline.alert-ok strong,
+.alert-inline.alert-ok a,
+.alert-inline.alert-ok .muted,
+.alert-ok b,
+.alert-ok strong,
+.alert-ok a,
+.alert-ok .muted{color:#fff!important}
 .alert-danger{background:#fff0f1!important;color:#a64b52!important;border-color:#f0cbce!important}
 .toast-host .alert{font-size:17px!important;border-radius:13px!important;box-shadow:0 14px 30px rgba(50,92,65,.15)}
-.toast-host .alert-ok{background:#387c54!important}
-.toast-host .alert-danger{background:#b9545b!important}
+.toast-host .alert-ok{background:linear-gradient(135deg,#2f8a58,#226a43)!important;color:#fff!important;border:none!important}
+.toast-host .alert-danger{background:#b9545b!important;color:#fff!important}
 .modal{background:rgba(34,55,40,.42);backdrop-filter:blur(4px)}
 .modal-card{border:1px solid #e2eee4!important;border-radius:20px!important;box-shadow:0 25px 65px rgba(39,69,47,.20)!important}
 .paste-box{font-size:16px!important}
