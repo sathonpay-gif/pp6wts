@@ -975,3 +975,41 @@ button{border:0}
   line-height:1.35!important;
   font-family:'TH Sarabun New','TH Sarabun','thsarabun','Sarabun','Noto Sans Thai',Tahoma,sans-serif!important;
 }
+
+/* =========================================================
+   CSV / IMPORT FIX — danger alerts must stay readable
+   ========================================================= */
+.alert-inline.alert-danger,
+.alert-danger{
+  background:linear-gradient(135deg,#c95861,#b44750)!important;
+  color:#fff!important;
+  border-color:#a83e47!important;
+  text-shadow:0 1px 1px rgba(71,20,24,.14);
+}
+.alert-inline.alert-danger b,
+.alert-inline.alert-danger strong,
+.alert-inline.alert-danger a,
+.alert-inline.alert-danger .muted,
+.alert-danger b,
+.alert-danger strong,
+.alert-danger a,
+.alert-danger .muted{color:#fff!important}
+.toast-host .alert-danger{
+  background:linear-gradient(135deg,#b94f58,#a9434c)!important;
+  color:#fff!important;
+  border:none!important;
+}
+#assessPastePreview .alert-inline,
+#actPastePreview .alert-inline,
+#csvImportResult .alert-inline{
+  max-height:260px;
+  overflow:auto;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.modal-card input[type="file"]{max-width:100%;font-size:16px}
+@media(max-width:580px){
+  .alert-inline{font-size:17px!important;padding:11px 13px!important}
+  .modal{padding:20px 10px 28px!important}
+  .modal-card{padding:18px!important}
+}

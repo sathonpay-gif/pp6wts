@@ -90,7 +90,7 @@ function renderShell(){
   const years=[...new Set((state.periods||[]).map(x=>String(x.year)))];
   const terms=(state.periods||[]).filter(x=>String(x.year)===String(state.period.year)).map(x=>String(x.term));
   const termOptions=terms.map(t=>`<option value="${escapeHtml(t)}" ${String(t)===String(state.period.term)?'selected':''}>ภาคเรียน ${escapeHtml(t)}</option>`).join('');
-  $('appView').innerHTML=`<div class="topbar"><div class="brand-wrap"><div class="brand-logo brand-logo-large"><img src="data:image/png;base64,${SCHOOL_LOGO_B64}" alt="ตราโรงเรียน"></div><div class="brand"><strong>ระบบ ปพ.6</strong><small>โรงเรียนวัดไตรสามัคคี</small></div></div><div class="topbar-right"><div class="period-picker"><span class="period-icon">📅</span><div><label>ช่วงการศึกษา</label><div class="period-controls"><select id="periodYear" onchange="changePeriodYear()">${years.map(y=>`<option value="${escapeHtml(y)}" ${String(y)===String(state.period.year)?'selected':''}>${escapeHtml(y)}</option>`).join('')}</select><select id="periodTerm" onchange="changeAcademicPeriod()">${termOptions}</select></div></div></div><div class="system-status"><span class="status-dot"></span> ระบบพร้อมใช้งาน</div><div class="user-pill"><span class="user-avatar">${escapeHtml(initial)}</span><span class="user-meta"><span class="user-name">${escapeHtml(state.me.fullName)}</span><span class="user-role">${roleText}</span></span></div><button class="menu-toggle" onclick="toggleSidebar()" aria-label="เมนู">☰</button><button class="btn btn-secondary top-logout" onclick="logout()">ออกจากระบบ</button></div></div><div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-school"><img src="data:image/png;base64,${SCHOOL_LOGO_B64}" alt="ตราโรงเรียน"><div><b>โรงเรียนวัดไตรสามัคคี</b><small>ระบบ ปพ.6</small></div></div><div class="sidebar-period"><span>📅</span><div><small>กำลังทำงานใน</small><b>ปีการศึกษา ${escapeHtml(state.period.year)} · ภาคเรียน ${escapeHtml(state.period.term)}</b></div></div><div class="sidebar-section">เมนูหลัก</div>${makeMenu(MENU)}${adminHtml}<div class="sidebar-spacer"></div><button class="menu-btn" onclick="showPasswordModal()">${iconLabel('⚿','เปลี่ยนรหัสผ่าน')}</button><div class="sidebar-footer">โรงเรียนวัดไตรสามัคคี · ระบบทะเบียนผลการเรียน</div></aside><main id="page" class="content"></main></div>`;
+  $('appView').innerHTML=`<div class="topbar"><div class="brand-wrap"><div class="brand-logo brand-logo-large"><img src="data:image/png;base64,${SCHOOL_LOGO_B64}" alt="ตราโรงเรียน"></div><div class="brand"><strong>ระบบ ปพ.6</strong><small>โรงเรียนวัดไตรสามัคคี</small></div></div><div class="topbar-right"><div class="period-picker"><span class="period-icon">📅</span><div><label>ช่วงการศึกษา</label><div class="period-controls"><select id="periodYear" onchange="changePeriodYear()">${years.map(y=>`<option value="${escapeHtml(y)}" ${String(y)===String(state.period.year)?'selected':''}>${escapeHtml(y)}</option>`).join('')}</select><select id="periodTerm" onchange="changeAcademicPeriod()">${termOptions}</select></div></div></div><div class="system-status"><span class="status-dot"></span> ระบบพร้อมใช้งาน</div><div class="user-pill"><span class="user-avatar">${escapeHtml(initial)}</span><span class="user-meta"><span class="user-name">${escapeHtml(state.me.fullName)}</span><span class="user-role">${roleText}</span></span></div><button class="menu-toggle" onclick="toggleSidebar()" aria-label="เมนู">☰</button><button class="btn btn-secondary top-logout" onclick="logout()">ออกจากระบบ</button></div></div><div class="layout"><aside class="sidebar" id="sidebar"><div class="sidebar-school"><img src="data:image/png;base64,${SCHOOL_LOGO_B64}" alt="ตราโรงเรียน"><div><b>โรงเรียนวัดไตรสามัคคี</b><small>ระบบ ปพ.6</small></div></div><div class="sidebar-section">เมนูหลัก</div>${makeMenu(MENU)}${adminHtml}<div class="sidebar-spacer"></div><button class="menu-btn" onclick="showPasswordModal()">${iconLabel('⚿','เปลี่ยนรหัสผ่าน')}</button><div class="sidebar-footer">โรงเรียนวัดไตรสามัคคี · ระบบทะเบียนผลการเรียน</div></aside><main id="page" class="content"></main></div>`;
 }
 
 function toggleSidebar(){$('sidebar').classList.toggle('open');}
@@ -259,7 +259,7 @@ async function renderStudents(p){
     p.innerHTML=`<h2>ลงทะเบียนนักเรียน</h2><div class="card"><div class="alert-inline alert-danger"><b>ยังไม่มีห้องที่ได้รับสิทธิ์ครูประจำชั้น</b><br>ผู้ดูแลระบบสามารถเชื่อมสิทธิ์ได้ที่เมนู <b>“ตั้งค่าห้อง / ครูประจำชั้น”</b> โดยเลือกชื่อครูในช่อง <b>ครูประจำชั้น 1</b> หรือ <b>ครูประจำชั้น 2</b> ของห้อง เมื่อบันทึกแล้ว ห้องจะปรากฏที่นี่อัตโนมัติสำหรับปีการศึกษา ${escapeHtml(state.period.year)} ภาคเรียน ${escapeHtml(state.period.term)}</div></div>`;
     return;
   }
-  p.innerHTML=`<h2>ลงทะเบียนนักเรียน</h2>${periodBannerHtml()}<p class="section-note">สิทธิ์การจัดการรายชื่อนักเรียนเชื่อมจากหน้า “ตั้งค่าห้อง / ครูประจำชั้น” โดยตรง จึงไม่ต้องกำหนด Role เพิ่มให้ครู</p><div class="card"><div class="toolbar"><select id="classStudentSelect" onchange="loadStudentsGrid()"><option value="">-- เลือกห้อง --</option>${cls.map(c=>`<option value="${c.classId}">${escapeHtml(c.className)}</option>`).join('')}</select><button class="btn btn-primary" onclick="openAddStudentModal()">➕ เพิ่มนักเรียน</button><button class="btn btn-secondary" onclick="openStudentPasteModal()">📋 วางข้อมูลจาก Excel</button><button class="btn btn-secondary" onclick="downloadCsv('เทมเพลต_นักเรียน.csv',CSV_TEMPLATES.students)">⬇ เทมเพลต CSV</button><button class="btn btn-danger" onclick="clearAllStudents()">🧹 ล้างข้อมูลนักเรียนทั้งห้อง</button></div>${bulkBarHtml('studentGrid','bulkRemoveStudents()')}<div id="studentGrid" class="table-wrap"></div></div>`;
+  p.innerHTML=`<h2>ลงทะเบียนนักเรียน</h2>${periodBannerHtml()}<p class="section-note">สิทธิ์การจัดการรายชื่อนักเรียนเชื่อมจากหน้า “ตั้งค่าห้อง / ครูประจำชั้น” โดยตรง จึงไม่ต้องกำหนด Role เพิ่มให้ครู</p><div class="card"><div class="toolbar"><select id="classStudentSelect" onchange="loadStudentsGrid()"><option value="">-- เลือกห้อง --</option>${cls.map(c=>`<option value="${c.classId}">${escapeHtml(c.className)}</option>`).join('')}</select><button class="btn btn-primary" onclick="openAddStudentModal()">➕ เพิ่มนักเรียน</button><button class="btn btn-secondary" onclick="openStudentPasteModal()">📋 นำเข้า/วางจาก Excel</button><button class="btn btn-secondary" onclick="downloadCsv('เทมเพลต_นักเรียน.csv',CSV_TEMPLATES.students)">⬇ เทมเพลต CSV</button><button class="btn btn-danger" onclick="clearAllStudents()">🧹 ล้างข้อมูลนักเรียนทั้งห้อง</button></div>${bulkBarHtml('studentGrid','bulkRemoveStudents()')}<div id="studentGrid" class="table-wrap"></div></div>`;
 }
 async function loadStudentsGrid(){
   const id=$('classStudentSelect').value;if(!id)return;
@@ -299,7 +299,7 @@ async function removeStudentNow(studentId){
   try{await call('removeClassMember',state.token,window._studentClassId,studentId);toast('นำออกจากห้องแล้ว',true);await loadStudentsGrid();}catch(e){toast(e.message);}
 }
 function openStudentPasteModal(){
-  $('page').insertAdjacentHTML('beforeend',`<div class="modal" id="studentModal"><div class="modal-card"><h3>นำเข้ารายชื่อนักเรียน</h3><p class="muted">รูปแบบ: เลขที่ | เลขประจำตัว | คำนำหน้า | ชื่อ | นามสกุล | เพศ (ชาย/หญิง/อื่นๆ/ไม่ระบุ)</p><textarea id="studentPaste" class="paste-box"></textarea><div class="toolbar" style="margin-top:12px"><input type="file" id="studentCsvFile" accept=".csv" onchange="readFileInto('studentCsvFile','studentPaste')"><button class="btn btn-primary" onclick="importStudentsNow()">ตรวจสอบและบันทึก</button><button class="btn btn-secondary" onclick="closeModal('studentModal')">ยกเลิก</button></div></div></div>`);
+  $('page').insertAdjacentHTML('beforeend',`<div class="modal" id="studentModal"><div class="modal-card"><h3>นำเข้ารายชื่อนักเรียน</h3><p class="muted">รองรับการวางจาก Excel (Tab) หรือไฟล์ .csv (Comma) รูปแบบ: เลขที่ | เลขประจำตัว | คำนำหน้า | ชื่อ | นามสกุล | เพศ (ชาย/หญิง/อื่นๆ/ไม่ระบุ)</p><textarea id="studentPaste" class="paste-box"></textarea><div class="toolbar" style="margin-top:12px"><input type="file" id="studentCsvFile" accept=".csv,text/csv" onchange="readFileInto('studentCsvFile','studentPaste')"><button class="btn btn-primary" onclick="importStudentsNow()">ตรวจสอบและบันทึก</button><button class="btn btn-secondary" onclick="closeModal('studentModal')">ยกเลิก</button></div></div></div>`);
 }
 async function importStudentsNow(){
   const cls=$('classStudentSelect').value;if(!cls)return toast('เลือกห้องก่อน');
@@ -469,7 +469,7 @@ async function registerMyTeaching(){return registerMyTeachingBatch();}
 /* ---------------- Activities (teacher entry) ---------------- */
 async function renderActivities(p){
   const aas=await call('getActivityAssignments',state.token,state.period.year,state.period.term);
-  p.innerHTML=`<h2>กิจกรรมพัฒนาผู้เรียน</h2>${periodBannerHtml()}<div class="card"><div class="toolbar"><select id="activitySelect" onchange="loadActivityGrid()"><option value="">-- เลือกกิจกรรม / ห้อง --</option>${aas.map(a=>`<option value="${a.activityAssignmentId}">${escapeHtml(a.activityName+(a.groupName?' ('+a.groupName+')':'')+(a.className?' · '+a.className:' · คละห้อง'))}</option>`).join('')}</select><button class="btn btn-secondary" onclick="openActivityPasteModal()">📋 วางผลจาก Excel</button><button class="btn btn-primary" onclick="saveActivityGrid()">บันทึก</button></div><div id="activityGrid" class="table-wrap"></div></div>`;
+  p.innerHTML=`<h2>กิจกรรมพัฒนาผู้เรียน</h2>${periodBannerHtml()}<div class="card"><div class="toolbar"><select id="activitySelect" onchange="loadActivityGrid()"><option value="">-- เลือกกิจกรรม / ห้อง --</option>${aas.map(a=>`<option value="${a.activityAssignmentId}">${escapeHtml(a.activityName+(a.groupName?' ('+a.groupName+')':'')+(a.className?' · '+a.className:' · คละห้อง'))}</option>`).join('')}</select><button class="btn btn-secondary" onclick="openActivityPasteModal()">📋 นำเข้า/วางผลจาก Excel</button><button class="btn btn-primary" onclick="saveActivityGrid()">บันทึก</button></div><div id="activityGrid" class="table-wrap"></div></div>`;
   window._activityAssignments=aas;
 }
 async function loadActivityGrid(){
@@ -486,11 +486,10 @@ async function saveActivityGrid(){
 }
 function openActivityPasteModal(){
   if(!$('activitySelect')||!$('activitySelect').value)return toast('กรุณาเลือกกิจกรรมก่อน');
-  $('page').insertAdjacentHTML('beforeend',`<div class="modal" id="actPasteModal"><div class="modal-card"><h3>วางผลจาก Excel</h3><p class="muted">รูปแบบ: เลขที่/เลขประจำตัว, ผล(ผ/มผ), คะแนน — หรือวางเฉพาะคะแนน 1 คอลัมน์</p><textarea id="actPasteText" class="paste-box" placeholder="ตัวอย่าง&#10;1&#9;ผ&#9;80&#10;2&#9;ผ&#9;75"></textarea><div class="toolbar" style="margin-top:12px"><button class="btn btn-primary" onclick="applyActivityPaste()">ตรวจสอบและนำไปใส่ตาราง</button><button class="btn btn-secondary" onclick="closeModal('actPasteModal')">ยกเลิก</button></div><div id="actPastePreview"></div></div></div>`);
+  $('page').insertAdjacentHTML('beforeend',`<div class="modal" id="actPasteModal"><div class="modal-card"><h3>นำเข้า/วางผลจาก Excel</h3><p class="muted">รองรับการวางจาก Excel (Tab) หรือไฟล์ .csv (Comma) รูปแบบ: เลขที่/เลขประจำตัว, ผล(ผ/มผ), คะแนน — หรือวางเฉพาะคะแนน 1 คอลัมน์</p><input type="file" id="actCsvFile" accept=".csv,text/csv" onchange="readFileInto('actCsvFile','actPasteText')"><textarea id="actPasteText" class="paste-box" placeholder="ตัวอย่าง&#10;1&#9;ผ&#9;80&#10;2&#9;ผ&#9;75"></textarea><div class="toolbar" style="margin-top:12px"><button class="btn btn-primary" onclick="applyActivityPaste()">ตรวจสอบและนำไปใส่ตาราง</button><button class="btn btn-secondary" onclick="closeModal('actPasteModal')">ยกเลิก</button></div><div id="actPastePreview"></div></div></div>`);
 }
 function applyActivityPaste(){
-  const text=$('actPasteText').value.replace(/\r/g,'');
-  const rows=text.split('\n').map(x=>x.split('\t')).filter(r=>r.some(c=>c.trim()!==''));
+  const rows=parseClientDelimited_($('actPasteText').value).filter(r=>!isCsvHeaderOrNote_(r));
   const grid=[...document.querySelectorAll('#activityGrid tbody tr')];
   const data=window._activityData?.rows||[];
   let applied=0;const errors=[];
@@ -542,7 +541,7 @@ async function saveAssessmentGrid(){
 }
 function openAssessPasteModal(){
   if(!$('assessClass')||!$('assessClass').value)return toast('กรุณาเลือกห้องก่อน');
-  $('page').insertAdjacentHTML('beforeend',`<div class="modal" id="assessPasteModal"><div class="modal-card"><h3>นำเข้า/วางผลจาก Excel</h3><p class="muted">รูปแบบ: เลขที่/เลขประจำตัว, อ่านฯ, คุณลักษณะฯ, สมรรถนะ — ค่าที่รองรับ: 1, 2, 3 หรือ ดี/พอใช้/ปรับปรุง</p><input type="file" id="assessCsvFile" accept=".csv" onchange="readFileInto('assessCsvFile','assessPasteText')"><textarea id="assessPasteText" class="paste-box" style="margin-top:10px" placeholder="ตัวอย่าง&#10;1&#9;3&#9;3&#9;2&#10;2&#9;2&#9;3&#9;3"></textarea><div class="toolbar" style="margin-top:12px"><button class="btn btn-primary" onclick="applyAssessPaste()">ตรวจสอบและนำไปใส่ตาราง</button><button class="btn btn-secondary" onclick="closeModal('assessPasteModal')">ยกเลิก</button></div><div id="assessPastePreview"></div></div></div>`);
+  $('page').insertAdjacentHTML('beforeend',`<div class="modal" id="assessPasteModal"><div class="modal-card"><h3>นำเข้า/วางผลจาก Excel</h3><p class="muted">รองรับการวางจาก Excel (Tab) หรือไฟล์ .csv (Comma) และข้ามหัวตารางให้อัตโนมัติ รูปแบบ: เลขที่/เลขประจำตัว, อ่านฯ, คุณลักษณะฯ, สมรรถนะ — ค่าที่รองรับ: 1, 2, 3 หรือ ดี/พอใช้/ปรับปรุง</p><input type="file" id="assessCsvFile" accept=".csv,text/csv" onchange="readFileInto('assessCsvFile','assessPasteText')"><textarea id="assessPasteText" class="paste-box" style="margin-top:10px" placeholder="ตัวอย่าง&#10;1&#9;3&#9;3&#9;2&#10;2&#9;2&#9;3&#9;3"></textarea><div class="toolbar" style="margin-top:12px"><button class="btn btn-primary" onclick="applyAssessPaste()">ตรวจสอบและนำไปใส่ตาราง</button><button class="btn btn-secondary" onclick="closeModal('assessPasteModal')">ยกเลิก</button></div><div id="assessPastePreview"></div></div></div>`);
 }
 function assessLevelFromText_(v){
   const s=String(v||'').trim();
@@ -551,8 +550,7 @@ function assessLevelFromText_(v){
   return map[s]||'';
 }
 function applyAssessPaste(){
-  const text=$('assessPasteText').value.replace(/\r/g,'');
-  const rows=text.split('\n').map(x=>x.split('\t')).filter(r=>r.some(c=>c.trim()!==''));
+  const rows=parseClientDelimited_($('assessPasteText').value).filter(r=>!isCsvHeaderOrNote_(r));
   const grid=[...document.querySelectorAll('#assessmentGrid tbody tr')];
   const data=window._assessData?.students||[];
   const mapByNo={},mapByCode={};
@@ -1018,11 +1016,11 @@ async function changePw(){try{await call('changePassword',state.token,$('oldPw')
 const CSV_TEMPLATES={
   students:'เลขที่,เลขประจำตัว,คำนำหน้า,ชื่อ,นามสกุล,เพศ\n1,10204,เด็กชาย,จิรภัทร,เลิศชัยกูล,ชาย\n2,10205,เด็กชาย,กรินทร์,จันทร์มงคล,ชาย',
   subjects:'รหัสวิชา,ชื่อวิชา,ประเภท,หน่วยกิต,เวลาเรียน\nท22101,ภาษาไทย 3,พื้นฐาน,1.5,60\nค22201,คณิตศาสตร์เพิ่มเติม 3,เพิ่มเติม,0.5,20',
-  teachers:'Username,ชื่อ-สกุล,Role,รหัสผ่านเริ่มต้น\nsomsri.t,นางสมศรี ใจดี,TEACHER,Passw0rd123\nsurin.h,นายสุรินทร์ มั่นคง,TEACHER\\,HOMEROOM,Passw0rd123',
+  teachers:'Username,ชื่อ-สกุล,Role,รหัสผ่านเริ่มต้น\nsomsri.t,นางสมศรี ใจดี,TEACHER,Passw0rd123\nsurin.h,นายสุรินทร์ มั่นคง,"TEACHER,HOMEROOM",Passw0rd123',
   teaching:'ห้อง,รหัสวิชา,Username ครู,คะแนนเต็ม,หน่วยกิต,เวลาเรียน\nม.2/3,ท22101,somsri.t,100,1.5,60',
   classes:'ระดับชั้น,ห้อง,Username ครูประจำชั้น1,Username ครูประจำชั้น2\nม.2,3,surin.h,',
   activityAssignments:'กิจกรรม,ห้อง(หรือ ALL สำหรับคละห้อง),กลุ่ม/ชื่อชุมนุม,Username ครู\nชุมนุม,ALL,ชุมนุมคอมพิวเตอร์,somsri.t\nแนะแนว,ม.2/3,,surin.h',
-  assessment:'เลขที่,อ่านคิดวิเคราะห์เขียน,คุณลักษณะอันพึงประสงค์,สมรรถนะสำคัญ\n1,3,3,2\n2,2,3,3\n\nหมายเหตุ: ใช้เลขที่ในห้อง หรือเลขประจำตัวนักเรียนก็ได้ / ค่าที่กรอกได้: 1 2 3 หรือ ดี พอใช้ ปรับปรุง'
+  assessment:'เลขที่,อ่านคิดวิเคราะห์เขียน,คุณลักษณะอันพึงประสงค์,สมรรถนะสำคัญ\n1,3,3,2\n2,2,3,3'
 };
 function downloadCsv(filename,content){
   const blob=new Blob(['\uFEFF'+content],{type:'text/csv;charset=utf-8;'});
@@ -1030,6 +1028,42 @@ function downloadCsv(filename,content){
   const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+function parseClientDelimited_(text){
+  text=String(text||'').replace(/^\uFEFF/,'').replace(/\r/g,'');
+  if(!text.trim())return [];
+  const lines=text.split('\n').filter(line=>line.trim()!=='');
+  if(!lines.length)return [];
+  const sample=lines[0];
+  const tab=(sample.match(/\t/g)||[]).length;
+  const semi=(sample.match(/;/g)||[]).length;
+  const comma=(sample.match(/,/g)||[]).length;
+  const delim=tab>0?'\t':(semi>comma?';':',');
+  const parseLine=(line)=>{
+    const out=[];let cur='';let quoted=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(quoted){
+        if(c==='"'){
+          if(line[i+1]==='"'){cur+='"';i++;}
+          else quoted=false;
+        }else cur+=c;
+      }else{
+        if(c==='"')quoted=true;
+        else if(c===delim){out.push(cur.trim());cur='';}
+        else cur+=c;
+      }
+    }
+    out.push(cur.trim());
+    return out;
+  };
+  return lines.map(parseLine).filter(r=>r.some(c=>String(c||'').trim()!==''));
+}
+function isCsvHeaderOrNote_(row){
+  const joined=row.map(x=>String(x||'').trim()).join(' ').toLowerCase();
+  if(!joined)return true;
+  return /^(หมายเหตุ|note\b)/i.test(joined) || (joined.includes('เลขที่') && (joined.includes('อ่าน') || joined.includes('ผล') || joined.includes('คะแนน')));
+}
+
 function readFileInto(fileInputId,targetTextareaId){
   const input=$(fileInputId);if(!input.files||!input.files[0])return;
   const reader=new FileReader();
@@ -1037,7 +1071,7 @@ function readFileInto(fileInputId,targetTextareaId){
   reader.readAsText(input.files[0],'utf-8');
 }
 function openCsvImportModal(label,fnName,onDone){
-  $('page').insertAdjacentHTML('beforeend',`<div class="modal" id="csvImportModal"><div class="modal-card"><h3>นำเข้าข้อมูล: ${escapeHtml(label)}</h3><p class="muted">อัปโหลดไฟล์ .csv หรือวางข้อมูลด้านล่าง (แถวแรกเป็นหัวตารางได้ ระบบจะข้ามให้อัตโนมัติ)</p><input type="file" id="csvImportFile" accept=".csv" onchange="readFileInto('csvImportFile','csvImportText')"><textarea id="csvImportText" class="paste-box" style="margin-top:10px"></textarea><div id="csvImportResult"></div><div class="toolbar" style="margin-top:10px"><button class="btn btn-primary" onclick="runCsvImport('${fnName}')">นำเข้าข้อมูล</button><button class="btn btn-secondary" onclick="closeModal('csvImportModal')">ปิด</button></div></div></div>`);
+  $('page').insertAdjacentHTML('beforeend',`<div class="modal" id="csvImportModal"><div class="modal-card"><h3>นำเข้าข้อมูล: ${escapeHtml(label)}</h3><p class="muted">อัปโหลดไฟล์ .csv หรือวางข้อมูลด้านล่าง (แถวแรกเป็นหัวตารางได้ ระบบจะข้ามให้อัตโนมัติ)</p><input type="file" id="csvImportFile" accept=".csv,text/csv" onchange="readFileInto('csvImportFile','csvImportText')"><textarea id="csvImportText" class="paste-box" style="margin-top:10px"></textarea><div id="csvImportResult"></div><div class="toolbar" style="margin-top:10px"><button class="btn btn-primary" onclick="runCsvImport('${fnName}')">นำเข้าข้อมูล</button><button class="btn btn-secondary" onclick="closeModal('csvImportModal')">ปิด</button></div></div></div>`);
   window._csvImportDone=onDone;
 }
 async function runCsvImport(fnName){
