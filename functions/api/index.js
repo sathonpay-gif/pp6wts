@@ -9,23 +9,14 @@
  *   https://script.google.com/macros/s/XXXXXXXXXXXXXXXX/exec
  *
  * เรื่องแคช:
- *   เฉพาะฟังก์ชันใน CACHEABLE_FNS เท่านั้นที่จะถูกแคชไว้ที่ Cloudflare Edge
- *   (20 วินาที) เพื่อความเร็ว โดยเลือกเฉพาะฟังก์ชันที่ "อ่านอย่างเดียว" และ
- *   ไม่ใช่ข้อมูลที่หน้าเว็บโหลดซ้ำทันทีหลังกดบันทึก (ตรวจสอบจาก app.js แล้วว่า
- *   getClasses/getSubjects/getStudentsByClass/getScoreEntry ฯลฯ ถูกเรียกซ้ำทันที
- *   หลัง save จึงไม่ใส่ในแคช เพื่อไม่ให้เห็นข้อมูลเก่าค้างหลังบันทึก)
- *   ฟังก์ชันที่ไม่อยู่ในลิสต์นี้จะยิงไปหา Apps Script สดทุกครั้งเหมือนเดิม
+ *   เฉพาะฟังก์ชัน infrastructure ที่ปลอดภัยต่อการ cache เท่านั้นที่ถูกแคชไว้ที่
+ *   Cloudflare Edge (20 วินาที) ส่วนข้อมูลธุรกรรม/คะแนน/แดชบอร์ดไม่ cache เพื่อ
+ *   ป้องกันข้อมูลเก่าค้างหลังบันทึก แม้จะรีเฟรชหน้าเว็บหรือเปิดจากหลายอุปกรณ์
  */
 
 const CACHEABLE_FNS = new Set([
   'apiPing',
-  'getSetupStatus',
-  'bootstrap',
-  'getDashboard',
-  'getPP6Data',
-  'getClassSummaryData',
-  'getClassActivitySummaryData',
-  'getGradeHistory'
+  'getSetupStatus'
 ]);
 const CACHE_TTL_SEC = 20;
 
